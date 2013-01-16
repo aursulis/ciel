@@ -48,6 +48,7 @@ class SWStdinoutExecutor(ProcessRunningExecutor):
 
     def start_process(self, input_files, output_files):
 
+        ciel.log('in start_process(input_files=%s, output_files=%s' % (input_files, output_files), 'TRACING', logging.INFO)
         command_line = self.args["command_line"]
 
         for i, arg in enumerate(command_line):
