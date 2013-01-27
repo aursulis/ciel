@@ -1,0 +1,77 @@
+#include "options.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <time.h>
+#include <string.h>
+
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define LOCK_FILE "shmd.pid"
+
+static int get_lock_file(void)
+{
+	int lock_fd = open(LOCK_FILE, O_WRONLY|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+
+	if(lock_fd == -1) {
+		if(errno == EEXIST) {
+			fprintf(stderr, "shmd already running\n");
+			exit(EXIT_SUCCESS);
+		} else {
+			perror("open");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	return lock_fd;
+}
+
+static void setup_log_file(time_t *t)
+{
+	char buf[32];
+	strftime(buf, sizeof(buf), "shmd-%Y%m%d-%H%M%S.log", localtime(t));
+	freopen(buf, "w", stderr);
+}
+
+static void write_pid(int fd)
+{
+	char buf[16];
+	sprintf(buf, "%d\n", getpid());
+	write(fd, buf, strlen(buf));
+	fsync(fd);
+}
+
+int main(int argc, char **argv)
+{
+	struct shmd_options opts;
+	parse_options(argc, argv, &opts);
+
+	chdir(opts.bs_path);
+
+	int lock_fd = get_lock_file();
+	write_pid(lock_fd);
+	close(lock_fd);
+
+	time_t start_time = time(NULL);
+
+	if(opts.daemonise) {
+		if(daemon(1, 0) == -1) {
+			perror("daemon");
+			exit(EXIT_FAILURE);
+		}
+
+		setup_log_file(&start_time);
+	}
+
+	char buf[64];
+	strftime(buf, sizeof(buf), "Started shmd on %Y-%m-%d %H:%M:%S", localtime(&start_time));
+	fprintf(stderr, "%s\n", buf);
+
+	// Launch servers
+
+	unlink(LOCK_FILE);
+	return EXIT_SUCCESS;
+}
