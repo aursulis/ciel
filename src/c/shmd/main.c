@@ -13,12 +13,14 @@
  */
 
 #include "options.h"
+#include "ipc_server.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <time.h>
 #include <string.h>
+#include <pthread.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -84,7 +86,10 @@ int main(int argc, char **argv)
 	strftime(buf, sizeof(buf), "Started shmd on %Y-%m-%d %H:%M:%S", localtime(&start_time));
 	fprintf(stderr, "%s\n", buf);
 
-	// Launch servers
+	pthread_t ipc_thread;
+	pthread_create(&ipc_thread, NULL, ipc_server_main, NULL);
+
+	pthread_join(ipc_thread, NULL);
 
 	unlink(LOCK_FILE);
 	return EXIT_SUCCESS;
