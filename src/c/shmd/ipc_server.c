@@ -12,9 +12,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "ipc_server.h"
+#include "ipc_messages.h"
+#include "shm_loader.h"
+
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
 #include <pthread.h>
 
 #include <sys/socket.h>
@@ -51,7 +55,16 @@ void *ipc_server_main(void *ignored)
 		ssize_t bytes = recvfrom(sock_fd, buf, sizeof(buf), 0,
 				(struct sockaddr *)&srcaddr, &srclen);
 
-		// cast buffer to appropriate struct,
-		// perform operation
+		struct ipc_header *h = (struct ipc_header *)buf;
+		if(h->type == REF_REQ) {
+			struct ipc_ref_request *req = (struct ipc_ref_request *)buf;
+			fprintf(stderr, "[IpcSrv] received request for %s\n", req->refname);
+
+			struct ref_loader_work *w = (struct ref_loader_work *)malloc(sizeof(struct ref_loader_work));
+			strncpy(w->refname, req->refname, sizeof(w->refname));
+
+			pthread_t loader_thread;
+			pthread_create(&loader_thread, NULL, shm_ref_loader, (void *)w);
+		}
 	}
 }
