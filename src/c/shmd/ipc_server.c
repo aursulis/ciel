@@ -24,7 +24,7 @@
 
 void *ipc_server_main(void *ignored)
 {
-	fprintf(stderr, "IPC server thread started\n");
+	fprintf(stderr, "[IpcSrv] IPC server thread started\n");
 
 	int sock_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 	if(sock_fd == -1) {
@@ -46,7 +46,7 @@ void *ipc_server_main(void *ignored)
 	struct sockaddr_un srcaddr;
 	socklen_t srclen = sizeof(srcaddr);
 	while(1) {
-		fprintf(stderr, "[IPCsrv] waiting for incoming message\n");
+		fprintf(stderr, "[IpcSrv] waiting for incoming message\n");
 
 		ssize_t bytes = recvfrom(sock_fd, buf, sizeof(buf), 0,
 				(struct sockaddr *)&srcaddr, &srclen);
