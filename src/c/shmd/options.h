@@ -22,6 +22,8 @@ struct shmd_options {
 	const char *bs_path;
 };
 
+extern struct shmd_options shmdopts;
+
 void parse_options(int argc, char **argv, struct shmd_options *opts);
 
 #endif

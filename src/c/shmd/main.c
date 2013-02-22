@@ -62,10 +62,9 @@ static void write_pid(int fd)
 
 int main(int argc, char **argv)
 {
-	struct shmd_options opts;
-	parse_options(argc, argv, &opts);
+	parse_options(argc, argv, &shmdopts);
 
-	chdir(opts.bs_path);
+	chdir(shmdopts.bs_path);
 
 	int lock_fd = get_lock_file();
 	write_pid(lock_fd);
@@ -73,7 +72,7 @@ int main(int argc, char **argv)
 
 	time_t start_time = time(NULL);
 
-	if(opts.daemonise) {
+	if(shmdopts.daemonise) {
 		if(daemon(1, 0) == -1) {
 			perror("daemon");
 			exit(EXIT_FAILURE);

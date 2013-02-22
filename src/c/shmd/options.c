@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <getopt.h>
 
+struct shmd_options shmdopts;
+
 static void usage(const char *argv0)
 {
 	fprintf(stderr, "usage: %s OPTIONS\n", argv0);
