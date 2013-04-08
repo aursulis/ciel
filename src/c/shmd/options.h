@@ -15,11 +15,12 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+#include <limits.h>
 #include <stdbool.h>
 
 struct shmd_options {
 	bool daemonise;
-	const char *bs_path;
+	char bs_path[PATH_MAX];
 };
 
 extern struct shmd_options shmdopts;

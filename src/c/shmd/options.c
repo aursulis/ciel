@@ -14,8 +14,10 @@
 
 #include "options.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <stdio.h>
 #include <getopt.h>
 
@@ -30,8 +32,9 @@ static void usage(const char *argv0)
 
 void parse_options(int argc, char **argv, struct shmd_options *opts)
 {
+	bool path_provided = false;
 	opts->daemonise = false;
-	opts->bs_path = NULL;
+	char bs_dir[PATH_MAX];
 
 	struct option options[] = {
 		{"blockstore", required_argument, NULL, 'b'},
@@ -43,7 +46,8 @@ void parse_options(int argc, char **argv, struct shmd_options *opts)
 	while((c = getopt_long(argc, argv, "db:", options, NULL)) != -1) {
 		switch(c) {
 			case 'b':
-				opts->bs_path = optarg;
+				strncpy(bs_dir, optarg, PATH_MAX);
+				path_provided = true;
 				break;
 			case 'd':
 				opts->daemonise = true;
@@ -55,9 +59,15 @@ void parse_options(int argc, char **argv, struct shmd_options *opts)
 		}
 	}
 
-	if(opts->bs_path == NULL) {
+	if(!path_provided) {
 		fprintf(stderr, "Please specify a blockstore path\n");
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
+	} else {
+		strcat(bs_dir, "/../"); // assume that the daemon is passed a path suffixed with /data/
+		if(realpath(bs_dir, opts->bs_path) == NULL) {
+			perror("realpath");
+			exit(EXIT_FAILURE);
+		}
 	}
 }
