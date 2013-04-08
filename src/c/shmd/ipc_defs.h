@@ -12,10 +12,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef IPC_MESSAGES_H
-#define IPC_MESSAGES_H
+#ifndef IPC_DEFS_H
+#define IPC_DEFS_H
 
 #include <stddef.h>
+
+#define CLIENT_SOCK_TEMPL "/tmp/shmdc-XXXXXX"
+#define SOCKET_FILE "shmd.sock"
 
 enum ipc_message_t { REF_REQ, REF_LD };
 

@@ -15,9 +15,14 @@
 #ifndef SHM_LOADER_H
 #define SHM_LOADER_H
 
+#include <sys/socket.h>
+#include <sys/un.h>
+
 struct ref_loader_work {
 	char refname[256];
-	// possibly entries with reply-to info
+	int replyfd;
+	struct sockaddr_un replyaddr;
+	socklen_t replylen;
 };
 
 void *shm_ref_loader(void *loader_work);

@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -53,13 +54,13 @@ void *shm_ref_loader(void *loader_work) {
 	// form fully qualified pathname
 	char buf[1024];
 	snprintf(buf, sizeof(buf), "%s%s%s", shmdopts.bs_path, BS_SUFFIX, w->refname);
-	// stat
+	// TODO: stat
 	// exists) copy_into_shm
 	if(copy_into_shm(buf)) {
 		fprintf(stderr, "[RefLd] Loaded %s from local blockstore\n", w->refname);
 	}
-	// notfound) broadcast to other shmds
-	// notify requester of completion
+	// TODO: notfound) broadcast to other shmds
+	// TODO: notify requester of completion
 	free(loader_work);
 	pthread_exit(NULL);
 }
