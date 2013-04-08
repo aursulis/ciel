@@ -20,6 +20,7 @@ import tempfile
 import logging
 import re
 import threading
+import subprocess
 from datetime import datetime
 
 # XXX: Hack because urlparse doesn't nicely support custom schemes.
@@ -72,6 +73,9 @@ class BlockStore:
         global singleton_blockstore
         assert singleton_blockstore is None
         singleton_blockstore = self
+
+        # (possibly) start up shmd for the blockstore
+        subprocess.call(['/home/uranium/bin/shmd', '-d', '-b', base_dir]) # TODO: replace hardcoded path with proper one later
 
     def set_hostname(self, hostname):
         self.hostname = hostname
