@@ -23,6 +23,8 @@ import threading
 import subprocess
 from datetime import datetime
 
+import ciel.runtime.shmd_client
+
 # XXX: Hack because urlparse doesn't nicely support custom schemes.
 import urlparse
 from ciel.public.references import SW2_ConcreteReference, SW2_StreamReference,\
@@ -76,6 +78,9 @@ class BlockStore:
 
         # (possibly) start up shmd for the blockstore
         subprocess.call(['/home/uranium/bin/shmd', '-d', '-b', base_dir]) # TODO: replace hardcoded path with proper one later
+
+        # initialise libshmdc
+        ciel.runtime.shmd_client.init_lib(base_dir)
 
     def set_hostname(self, hostname):
         self.hostname = hostname

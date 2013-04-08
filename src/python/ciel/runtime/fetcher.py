@@ -215,6 +215,10 @@ class FetchInProgress:
             self.set_filename(filename_for_ref(self.ref), True)
             self.result(True, None)
 
+    def use_shared_memory(self):
+        ciel.log('try plan use_shared_memory', 'TRACING', logging.INFO)
+        pass
+
     def use_local_file(self):
         ciel.log('try plan use_local_file', 'TRACING', logging.INFO)
         filename = filename_for_ref(self.ref)
