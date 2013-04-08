@@ -31,6 +31,7 @@
 void *ipc_server_main(void *ignored)
 {
 	fprintf(stderr, "[IpcSrv] IPC server thread started\n");
+	fflush(stderr);
 
 	int pipe_fd[2];
 	if(pipe(pipe_fd) == -1) {
@@ -67,6 +68,7 @@ void *ipc_server_main(void *ignored)
 	fd_set work_set;
 	while(1) {
 		fprintf(stderr, "[IpcSrv] waiting for incoming message or queued reply\n");
+		fflush(stderr);
 
 		work_set = reference_set;
 		int rc = select(nfds, &work_set, NULL, NULL, NULL);
@@ -83,6 +85,7 @@ void *ipc_server_main(void *ignored)
 			if(h->type == REF_REQ) {
 				struct ipc_ref_request *req = (struct ipc_ref_request *)buf;
 				fprintf(stderr, "[IpcSrv] received request for %s\n", req->refname);
+				fflush(stderr);
 
 				struct ref_loader_work *w = (struct ref_loader_work *)malloc(sizeof(struct ref_loader_work));
 				strncpy(w->refname, req->refname, sizeof(w->refname));

@@ -84,6 +84,7 @@ int main(int argc, char **argv)
 	char buf[64];
 	strftime(buf, sizeof(buf), "Started shmd on %Y-%m-%d %H:%M:%S", localtime(&start_time));
 	fprintf(stderr, "%s\n", buf);
+	fflush(stderr);
 
 	pthread_t ipc_thread;
 	pthread_create(&ipc_thread, NULL, ipc_server_main, NULL);

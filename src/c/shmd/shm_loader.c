@@ -58,6 +58,7 @@ void *shm_ref_loader(void *loader_work) {
 	// exists) copy_into_shm
 	if(copy_into_shm(buf)) {
 		fprintf(stderr, "[RefLd] Loaded %s from local blockstore\n", w->refname);
+		fflush(stderr);
 	}
 	// TODO: notfound) broadcast to other shmds
 	// TODO: notify requester of completion
