@@ -15,6 +15,7 @@
 #ifndef IPC_DEFS_H
 #define IPC_DEFS_H
 
+#include <limits.h>
 #include <stddef.h>
 
 #define CLIENT_SOCK_TEMPL "/tmp/shmdc-XXXXXX"
@@ -29,12 +30,12 @@ struct ipc_header {
 
 struct ipc_ref_request {
 	struct ipc_header header;
-	char refname[256];
+	char refname[NAME_MAX];
 };
 
 struct ipc_ref_loaded {
 	struct ipc_header header;
-	char pathname[256];
+	char pathname[PATH_MAX];
 };
 
 #endif

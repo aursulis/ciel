@@ -15,6 +15,7 @@
 #include "shm_loader.h"
 #include "options.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@ void *shm_ref_loader(void *loader_work) {
 	pthread_detach(pthread_self());
 	struct ref_loader_work *w = (struct ref_loader_work *)loader_work;
 	// form fully qualified pathname
-	char buf[1024];
+	char buf[PATH_MAX];
 	snprintf(buf, sizeof(buf), "%s%s%s", shmdopts.bs_path, BS_SUFFIX, w->refname);
 	// TODO: stat
 	// exists) copy_into_shm

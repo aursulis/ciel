@@ -15,11 +15,12 @@
 #ifndef SHM_LOADER_H
 #define SHM_LOADER_H
 
+#include <limits.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
 struct ref_loader_work {
-	char refname[256];
+	char refname[NAME_MAX];
 	int replyfd;
 	struct sockaddr_un replyaddr;
 	socklen_t replylen;
