@@ -20,7 +20,8 @@
 #include <sys/un.h>
 
 struct ref_loader_work {
-	char refname[NAME_MAX];
+	char refname[NAME_MAX]; // XXX: this might actually be a path
+	char loadedname[PATH_MAX];
 	int replyfd;
 	struct sockaddr_un replyaddr;
 	socklen_t replylen;

@@ -55,7 +55,6 @@ void *ipc_server_main(void *ignored)
 		pthread_exit(NULL);
 	}
 
-	char buf[1024];
 	struct sockaddr_un srcaddr;
 	socklen_t srclen = sizeof(srcaddr);
 
@@ -65,6 +64,7 @@ void *ipc_server_main(void *ignored)
 	FD_SET(sock_fd, &reference_set);
 	int nfds = MAX(pipe_fd[0], sock_fd) + 1;
 
+	char buf[1024]; // TODO: this could be cleaner
 	fd_set work_set;
 	while(1) {
 		fprintf(stderr, "[IpcSrv] waiting for incoming message or queued reply\n");
@@ -99,7 +99,18 @@ void *ipc_server_main(void *ignored)
 		}
 
 		if(FD_ISSET(pipe_fd[0], &work_set)) {
-			// TODO: send out reply
+			struct ref_loader_work *w = NULL;
+			ssize_t bytes = read(pipe_fd[0], &w, sizeof(w));
+			
+			struct ipc_ref_loaded repl;
+			repl.header.len = sizeof(repl);
+			repl.header.type = REF_LD;
+			strncpy(repl.pathname, w->loadedname, sizeof(repl.pathname));
+
+			ssize_t send_bytes = sendto(sock_fd, &repl, sizeof(repl), 0,
+					(struct sockaddr *)&w->replyaddr, w->replylen);
+
+			free(w);
 		}
 	}
 }

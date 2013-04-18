@@ -16,6 +16,7 @@
 #include "options.h"
 
 #include <limits.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -32,7 +33,7 @@
  * however Linux does this, providing with a very convenient way to load files
  * into shared memory
  */
-static bool copy_into_shm(char *src_name) {
+static bool copy_into_shm(char *src_name, char *loaded_name) {
 	pid_t child = fork();
 	if(child == -1) {
 		perror("fork");
@@ -45,7 +46,12 @@ static bool copy_into_shm(char *src_name) {
 	} else {
 		int status = 0;
 		waitpid(child, &status, 0);
-		return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+		if(WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+			snprintf(loaded_name, PATH_MAX, SHM_PATH "%s", basename(src_name));
+			return true;
+		} else {
+			return false;
+		}
 	}
 }
 
@@ -54,15 +60,15 @@ void *shm_ref_loader(void *loader_work) {
 	struct ref_loader_work *w = (struct ref_loader_work *)loader_work;
 	// form fully qualified pathname
 	char buf[PATH_MAX];
-	snprintf(buf, sizeof(buf), "%s%s%s", shmdopts.bs_path, BS_SUFFIX, w->refname);
+	snprintf(buf, sizeof(buf), "%s%s%s", shmdopts.bs_path, BS_SUFFIX, w->refname); // XXX: this might not be necessary (thus wrong)
 	// TODO: stat
 	// exists) copy_into_shm
-	if(copy_into_shm(buf)) {
+	if(copy_into_shm(buf, w->loadedname)) {
 		fprintf(stderr, "[RefLd] Loaded %s from local blockstore\n", w->refname);
 		fflush(stderr);
 	}
 	// TODO: notfound) broadcast to other shmds
-	// TODO: notify requester of completion
-	free(loader_work);
+	// notify requester of completion
+	write(w->replyfd, &w, sizeof(w));
 	pthread_exit(NULL);
 }
