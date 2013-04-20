@@ -60,7 +60,8 @@ void *shm_ref_loader(void *loader_work) {
 	struct ref_loader_work *w = (struct ref_loader_work *)loader_work;
 	// form fully qualified pathname
 	char buf[PATH_MAX];
-	snprintf(buf, sizeof(buf), "%s%s%s", shmdopts.bs_path, BS_SUFFIX, w->refname); // XXX: this might not be necessary (thus wrong)
+	strncpy(buf, w->refname, sizeof(buf));
+	//snprintf(buf, sizeof(buf), "%s%s%s", shmdopts.bs_path, BS_SUFFIX, w->refname); // XXX: this might not be necessary (thus wrong)
 	// TODO: stat
 	// exists) copy_into_shm
 	if(copy_into_shm(buf, w->loadedname)) {
