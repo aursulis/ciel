@@ -65,11 +65,7 @@ int main(int argc, char **argv)
 	parse_options(argc, argv, &shmdopts);
 
 	chdir(shmdopts.bs_path);
-
 	int lock_fd = get_lock_file();
-	write_pid(lock_fd);
-	close(lock_fd);
-
 	time_t start_time = time(NULL);
 
 	if(shmdopts.daemonise) {
@@ -80,6 +76,9 @@ int main(int argc, char **argv)
 
 		setup_log_file(&start_time);
 	}
+
+	write_pid(lock_fd); // write PID _after_ having daemonised
+	close(lock_fd);
 
 	char buf[64];
 	strftime(buf, sizeof(buf), "Started shmd on %Y-%m-%d %H:%M:%S", localtime(&start_time));
