@@ -47,7 +47,7 @@ void ipc_init_client(const char *bs_path)
 	snprintf(shmd_socket_file, sizeof(shmd_socket_file), "%s/../" SOCKET_FILE, bs_path);
 }
 
-void ipc_send_ref_request(const char *refname)
+int ipc_send_ref_request(const char *refname, char *loadedname)
 {
 	// TODO: if socket creation becomes a bottleneck, consider having
 	// a singleton socket that is reused (and mutex protected)
@@ -55,7 +55,7 @@ void ipc_send_ref_request(const char *refname)
 	int sock_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 	if(sock_fd == -1) {
 		perror("socket");
-		return;
+		return -1;
 	}
 
 	struct sockaddr_un claddr;
@@ -65,7 +65,7 @@ void ipc_send_ref_request(const char *refname)
 
 	if(bind(sock_fd, (struct sockaddr *)&claddr, sizeof(claddr)) == -1) {
 		perror("bind");
-		return;
+		return -1;
 	}
 
 	struct sockaddr_un servaddr;
@@ -75,7 +75,7 @@ void ipc_send_ref_request(const char *refname)
 
 	if(connect(sock_fd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
 		perror("connect");
-		return;
+		return -1;
 	}
 
 	struct ipc_ref_request rq;
@@ -86,10 +86,21 @@ void ipc_send_ref_request(const char *refname)
 	ssize_t bytes = send(sock_fd, &rq, sizeof(rq), 0);
 	if(bytes == -1) {
 		perror("send");
-		return;
+		return -1;
 	}
 
-	// TODO: receive reply
+	char buf[1024]; // TODO: do this in a cleaner way
+	socklen_t servlen;
+	memset(&servaddr, 0, sizeof(struct sockaddr_un));
+	bytes = recvfrom(sock_fd, buf, sizeof(buf), 0,
+			(struct sockaddr *)&servaddr, &servlen);
+
+	struct ipc_header *h = (struct ipc_header *)buf;
+	if(h->type == REF_LD) {
+		struct ipc_ref_loaded *repl = (struct ipc_ref_loaded *)buf;
+		strncpy(loadedname, repl->pathname, sizeof(repl->pathname));
+	}
 
 	close(sock_fd);
+	return 0;
 }
