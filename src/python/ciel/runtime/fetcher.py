@@ -35,6 +35,7 @@ import hashlib
 import contextlib
 import urllib2
 import urlparse
+from ciel.runtime import shmd_client
 
 class AsyncPushThread:
 
@@ -179,8 +180,10 @@ class FetchInProgress:
         if isinstance(self.ref, SWDataValue):
             self.plans.append(self.resolve_dataval)
         elif isinstance(self.ref, SW2_FetchReference):
+            self.plans.append(self.use_shared_memory)
             self.plans.append(self.http_fetch)
         else:
+            self.plans.append(self.use_shared_memory)
             self.plans.append(self.use_local_file)
             self.plans.append(self.attach_local_producer)
             if isinstance(self.ref, SW2_ConcreteReference):
@@ -217,7 +220,12 @@ class FetchInProgress:
 
     def use_shared_memory(self):
         ciel.log('try plan use_shared_memory', 'TRACING', logging.INFO)
-        pass
+        status, filename = shmd_client.send_ref_request(filename_for_ref(self.ref))
+        if status == 0:
+            self.set_filename(filename, True)
+            self.result(True, None)
+        else:
+            raise PlanFailedError("Plan use-shared-memory failed for %s: shmd_client returned %d" % (self.ref, status), "BLOCKSTORE", logging.DEBUG)
 
     def use_local_file(self):
         ciel.log('try plan use_local_file', 'TRACING', logging.INFO)
