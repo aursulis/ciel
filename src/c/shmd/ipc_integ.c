@@ -99,6 +99,8 @@ int ipc_send_ref_request(const char *refname, char *loadedname)
 	if(h->type == REF_LD) {
 		struct ipc_ref_loaded *repl = (struct ipc_ref_loaded *)buf;
 		strncpy(loadedname, repl->pathname, sizeof(repl->pathname));
+	} else if(h->type == REF_FAIL) {
+		return -1;
 	}
 
 	close(sock_fd);

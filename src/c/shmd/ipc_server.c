@@ -102,13 +102,22 @@ void *ipc_server_main(void *ignored)
 			struct ref_loader_work *w = NULL;
 			ssize_t bytes = read(pipe_fd[0], &w, sizeof(w));
 			
-			struct ipc_ref_loaded repl;
-			repl.header.len = sizeof(repl);
-			repl.header.type = REF_LD;
-			strncpy(repl.pathname, w->loadedname, sizeof(repl.pathname));
+			if(w->status == LOAD_SUCCESS) {
+				struct ipc_ref_loaded repl;
+				repl.header.len = sizeof(repl);
+				repl.header.type = REF_LD;
+				strncpy(repl.pathname, w->loadedname, sizeof(repl.pathname));
 
-			ssize_t send_bytes = sendto(sock_fd, &repl, sizeof(repl), 0,
-					(struct sockaddr *)&w->replyaddr, w->replylen);
+				ssize_t send_bytes = sendto(sock_fd, &repl, sizeof(repl), 0,
+						(struct sockaddr *)&w->replyaddr, w->replylen);
+			} else if(w->status == LOAD_FAIL) {
+				struct ipc_ref_failed repl;
+				repl.header.len = sizeof(repl);
+				repl.header.type = REF_FAIL;
+
+				ssize_t send_bytes = sendto(sock_fd, &repl, sizeof(repl), 0,
+						(struct sockaddr *)&w->replyaddr, w->replylen);
+			}
 
 			free(w);
 		}

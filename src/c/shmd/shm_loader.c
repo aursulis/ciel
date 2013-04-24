@@ -22,8 +22,10 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 #define SHM_PATH "/dev/shm/"
@@ -58,17 +60,35 @@ static bool copy_into_shm(char *src_name, char *loaded_name) {
 void *shm_ref_loader(void *loader_work) {
 	pthread_detach(pthread_self());
 	struct ref_loader_work *w = (struct ref_loader_work *)loader_work;
+
 	// form fully qualified pathname
 	char buf[PATH_MAX];
 	strncpy(buf, w->refname, sizeof(buf));
 	//snprintf(buf, sizeof(buf), "%s%s%s", shmdopts.bs_path, BS_SUFFIX, w->refname); // XXX: this might not be necessary (thus wrong)
-	// TODO: stat
-	// exists) copy_into_shm
-	if(copy_into_shm(buf, w->loadedname)) {
-		fprintf(stderr, "[RefLd] Loaded %s from local blockstore\n", w->refname);
-		fflush(stderr);
+
+	struct stat st;
+	int rc = stat(buf, &st);
+
+	if(rc == 0) {
+		// TODO: check memory availability
+
+		// exists) copy_into_shm
+		if(copy_into_shm(buf, w->loadedname)) {
+			fprintf(stderr, "[RefLd] Loaded %s from local blockstore\n", w->refname);
+			fflush(stderr);
+			w->status = LOAD_SUCCESS;
+		} else {
+			w->status = LOAD_FAIL;
+		}
+	} else {
+		if(errno == ENOENT) {
+			// TODO: notfound) broadcast to other shmds
+		} else {
+			perror("stat");
+			w->status = LOAD_FAIL;
+		}
 	}
-	// TODO: notfound) broadcast to other shmds
+
 	// notify requester of completion
 	write(w->replyfd, &w, sizeof(w));
 	pthread_exit(NULL);

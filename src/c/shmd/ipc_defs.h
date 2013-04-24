@@ -21,7 +21,7 @@
 #define CLIENT_SOCK_TEMPL "/tmp/shmdc-XXXXXX"
 #define SOCKET_FILE "shmd.sock"
 
-enum ipc_message_t { REF_REQ, REF_LD };
+enum ipc_message_t { REF_REQ, REF_LD, REF_FAIL };
 
 struct ipc_header {
 	size_t len;
@@ -36,6 +36,10 @@ struct ipc_ref_request {
 struct ipc_ref_loaded {
 	struct ipc_header header;
 	char pathname[PATH_MAX];
+};
+
+struct ipc_ref_failed {
+	struct ipc_header header;
 };
 
 #endif

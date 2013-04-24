@@ -19,9 +19,12 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+enum loader_status_t { LOAD_SUCCESS, LOAD_FAIL };
+
 struct ref_loader_work {
 	char refname[NAME_MAX]; // XXX: this might actually be a path
 	char loadedname[PATH_MAX];
+	enum loader_status_t status;
 	int replyfd;
 	struct sockaddr_un replyaddr;
 	socklen_t replylen;
