@@ -22,7 +22,7 @@
 enum loader_status_t { LOAD_SUCCESS, LOAD_FAIL };
 
 struct ref_loader_work {
-	char refname[NAME_MAX]; // XXX: this might actually be a path
+	char refname[PATH_MAX];
 	char loadedname[PATH_MAX];
 	enum loader_status_t status;
 	int replyfd;

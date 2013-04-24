@@ -64,7 +64,7 @@ void *ipc_server_main(void *ignored)
 	FD_SET(sock_fd, &reference_set);
 	int nfds = MAX(pipe_fd[0], sock_fd) + 1;
 
-	char buf[1024]; // TODO: this could be cleaner
+	char buf[sizeof(struct ipc_ref_request)];
 	fd_set work_set;
 	while(1) {
 		fprintf(stderr, "[IpcSrv] waiting for incoming message or queued reply\n");

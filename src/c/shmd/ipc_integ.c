@@ -47,7 +47,7 @@ void ipc_init_client(const char *bs_path)
 	snprintf(shmd_socket_file, sizeof(shmd_socket_file), "%s/../" SOCKET_FILE, bs_path);
 }
 
-int ipc_send_ref_request(const char *refname, char *loadedname)
+int ipc_send_ref_request(const char *refname, char *loadedname) // XXX: sock_fd is not being closed on errors
 {
 	// TODO: if socket creation becomes a bottleneck, consider having
 	// a singleton socket that is reused (and mutex protected)
@@ -89,7 +89,7 @@ int ipc_send_ref_request(const char *refname, char *loadedname)
 		return -1;
 	}
 
-	char buf[1024]; // TODO: do this in a cleaner way
+	char buf[sizeof(struct ipc_ref_loaded)];
 	socklen_t servlen;
 	memset(&servaddr, 0, sizeof(struct sockaddr_un));
 	bytes = recvfrom(sock_fd, buf, sizeof(buf), 0,
