@@ -22,9 +22,14 @@ def init_lib(bs_path):
     ciel.log('initialising client library with %s' % bs_path, 'SHMDC', logging.INFO)
     _lib.ipc_init_client(bs_path)
 
-def send_ref_request(ref_name):
+def send_load_request(ref_name):
     ciel.log('sending request to load %s' % ref_name, 'SHMDC', logging.INFO)
-    loaded_name = ctypes.create_string_buffer(4096) # XXX: this is actually PATH_MAX; hardcode for now
-    return_code = _lib.ipc_send_ref_request(ref_name, loaded_name)
-    return (return_code, loaded_name.value)
+    shm_name = ctypes.create_string_buffer(4096) # XXX: this is actually PATH_MAX; hardcode for now
+    return_code = _lib.ipc_send_load_request(ref_name, shm_name)
+    return (return_code, shm_name.value)
 
+def send_write_request(ref_name):
+    ciel.log('sending request to write %s' % ref_name, 'SHMDC', logging.INFO)
+    shm_name = ctypes.create_string_buffer(4096) # XXX: this is actually PATH_MAX; hardcode for now
+    return_code = _lib.ipc_send_write_request(ref_name, shm_name)
+    return (return_code, shm_name.value)

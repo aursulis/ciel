@@ -64,7 +64,6 @@ void *ipc_server_main(void *ignored)
 	FD_SET(sock_fd, &reference_set);
 	int nfds = MAX(pipe_fd[0], sock_fd) + 1;
 
-	char buf[sizeof(struct ipc_ref_request)];
 	fd_set work_set;
 	while(1) {
 		fprintf(stderr, "[IpcSrv] waiting for incoming message or queued reply\n");
@@ -78,17 +77,16 @@ void *ipc_server_main(void *ignored)
 		}
 
 		if(FD_ISSET(sock_fd, &work_set)) {
-			ssize_t bytes = recvfrom(sock_fd, buf, sizeof(buf), 0,
+			struct ipc_request rq;
+			ssize_t bytes = recvfrom(sock_fd, &rq, sizeof(rq), 0,
 					(struct sockaddr *)&srcaddr, &srclen);
 
-			struct ipc_header *h = (struct ipc_header *)buf;
-			if(h->type == REF_REQ) {
-				struct ipc_ref_request *req = (struct ipc_ref_request *)buf;
-				fprintf(stderr, "[IpcSrv] received request for %s\n", req->refname);
+			if(rq.header.type == IPC_REQ_LD) {
+				fprintf(stderr, "[IpcSrv] received request for %s\n", rq.refname);
 				fflush(stderr);
 
 				struct ref_loader_work *w = (struct ref_loader_work *)malloc(sizeof(struct ref_loader_work));
-				strncpy(w->refname, req->refname, sizeof(w->refname));
+				strncpy(w->refname, rq.refname, sizeof(w->refname));
 				w->replyaddr = srcaddr;
 				w->replylen = srclen;
 				w->replyfd = pipe_fd[1];
@@ -102,22 +100,18 @@ void *ipc_server_main(void *ignored)
 			struct ref_loader_work *w = NULL;
 			ssize_t bytes = read(pipe_fd[0], &w, sizeof(w));
 			
+			struct ipc_response rsp;
+			rsp.header.len = sizeof(rsp);
+
 			if(w->status == LOAD_SUCCESS) {
-				struct ipc_ref_loaded repl;
-				repl.header.len = sizeof(repl);
-				repl.header.type = REF_LD;
-				strncpy(repl.pathname, w->loadedname, sizeof(repl.pathname));
-
-				ssize_t send_bytes = sendto(sock_fd, &repl, sizeof(repl), 0,
-						(struct sockaddr *)&w->replyaddr, w->replylen);
+				rsp.header.type = IPC_RSP_OK;
+				strncpy(rsp.shmname, w->loadedname, sizeof(rsp.shmname));
 			} else if(w->status == LOAD_FAIL) {
-				struct ipc_ref_failed repl;
-				repl.header.len = sizeof(repl);
-				repl.header.type = REF_FAIL;
-
-				ssize_t send_bytes = sendto(sock_fd, &repl, sizeof(repl), 0,
-						(struct sockaddr *)&w->replyaddr, w->replylen);
+				rsp.header.type = IPC_RSP_FAIL;
 			}
+
+			ssize_t send_bytes = sendto(sock_fd, &rsp, sizeof(rsp), 0,
+					(struct sockaddr *)&w->replyaddr, w->replylen);
 
 			free(w);
 		}

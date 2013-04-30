@@ -220,7 +220,7 @@ class FetchInProgress:
 
     def use_shared_memory(self):
         ciel.log('try plan use_shared_memory', 'TRACING', logging.INFO)
-        status, filename = shmd_client.send_ref_request(filename_for_ref(self.ref))
+        status, filename = shmd_client.send_load_request(filename_for_ref(self.ref))
         if status == 0:
             self.set_filename(filename, True)
             self.result(True, None)
