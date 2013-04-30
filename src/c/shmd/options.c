@@ -28,17 +28,20 @@ static void usage(const char *argv0)
 	fprintf(stderr, "usage: %s OPTIONS\n", argv0);
 	fprintf(stderr, "  -b PATH, --blockstore PATH : specify blockstore path\n");
 	fprintf(stderr, "  -d,      --daemon          : run as daemon, log file in blockstore path\n");
+	fprintf(stderr, "  -i NUM,  --id NUM          : specify ID of this shmd, must be unique\n");
 }
 
 void parse_options(int argc, char **argv, struct shmd_options *opts)
 {
 	bool path_provided = false;
 	opts->daemonise = false;
+	opts->shmd_id = -1;
 	char bs_dir[PATH_MAX];
 
 	struct option options[] = {
 		{"blockstore", required_argument, NULL, 'b'},
 		{"daemon",     no_argument,       NULL, 'd'},
+		{"id",         required_argument, NULL, 'i'},
 		{0, 0, 0, 0}
 	};
 
@@ -51,6 +54,9 @@ void parse_options(int argc, char **argv, struct shmd_options *opts)
 				break;
 			case 'd':
 				opts->daemonise = true;
+				break;
+			case 'i':
+				opts->shmd_id = atoi(optarg);
 				break;
 			case '?':
 				usage(argv[0]);

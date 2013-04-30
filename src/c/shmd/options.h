@@ -21,6 +21,7 @@
 struct shmd_options {
 	bool daemonise;
 	char bs_path[PATH_MAX];
+	int shmd_id;
 };
 
 extern struct shmd_options shmdopts;
