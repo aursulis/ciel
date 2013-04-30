@@ -82,7 +82,7 @@ void *ipc_server_main(void *ignored)
 					(struct sockaddr *)&srcaddr, &srclen);
 
 			if(rq.header.type == IPC_REQ_LD) {
-				fprintf(stderr, "[IpcSrv] received request for %s\n", rq.refname);
+				fprintf(stderr, "[IpcSrv] received request to load %s\n", rq.refname);
 				fflush(stderr);
 
 				struct ref_loader_work *w = (struct ref_loader_work *)malloc(sizeof(struct ref_loader_work));
@@ -93,6 +93,11 @@ void *ipc_server_main(void *ignored)
 
 				pthread_t loader_thread;
 				pthread_create(&loader_thread, NULL, shm_ref_loader, (void *)w);
+			} else if(rq.header.type == IPC_REQ_WR) {
+				fprintf(stderr, "[IpcSrv] received request to write %s\n", rq.refname);
+				fflush(stderr);
+
+				// TODO: do something
 			}
 		}
 
