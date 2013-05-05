@@ -81,6 +81,7 @@ class BlockStore:
 
         # initialise libshmdc
         ciel.runtime.shmd_client.init_lib(base_dir)
+        self.filename_cache = {}
 
     def set_hostname(self, hostname):
         self.hostname = hostname
@@ -111,7 +112,16 @@ class BlockStore:
             return BlockStore.OngoingFetch(ref, self)
     
     def producer_filename(self, id):
-        return os.path.join(self.base_dir, '.producer:%s' % id)
+        bsname = os.path.join(self.base_dir, '.producer:%s' % id)
+        try:
+            filename = self.filename_cache[bsname]
+        except KeyError:
+            status, filename = ciel.runtime.shmd_client.send_write_request(bsname)
+            if status == 0:
+                self.filename_cache[bsname] = filename
+            else:
+                filename = bsname
+        return filename
     
     def filename(self, id):
         return os.path.join(self.base_dir, str(id))
@@ -140,7 +150,11 @@ class BlockStore:
         return False
 
     def commit_file(self, old_name, new_name):
-
+        if old_name in self.filename_cache:
+            # TODO: send commit request
+            del self.filename_cache[old_name]
+            return
+        
         try:
             os.link(old_name, new_name)
         except OSError as e:
