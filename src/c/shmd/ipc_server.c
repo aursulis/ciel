@@ -108,8 +108,12 @@ void *ipc_server_main(void *ignored)
 			if(w->status == LOAD_SUCCESS) {
 				rsp.header.type = IPC_RSP_OK;
 				strncpy(rsp.shmname, w->loadedname, sizeof(rsp.shmname));
+
+				log_f("IpcSrv", "received load_success for %s\n", rsp.shmname);
 			} else if(w->status == LOAD_FAIL) {
 				rsp.header.type = IPC_RSP_FAIL;
+
+				log_f("IpcSrv", "received load_fail\n");
 			}
 
 			ssize_t send_bytes = sendto(sock_fd, &rsp, sizeof(rsp), 0,

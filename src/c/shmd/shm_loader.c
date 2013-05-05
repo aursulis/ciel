@@ -62,6 +62,8 @@ void *shm_ref_loader(void *loader_work) {
 	pthread_detach(pthread_self());
 	struct ref_loader_work *w = (struct ref_loader_work *)loader_work;
 
+	log_f("RefLd", "Loader thread started for %s\n", w->refname);
+
 	// form fully qualified pathname
 	char buf[PATH_MAX];
 	strncpy(buf, w->refname, sizeof(buf));
@@ -83,6 +85,7 @@ void *shm_ref_loader(void *loader_work) {
 	} else {
 		if(errno == ENOENT) {
 			// TODO: notfound) broadcast to other shmds
+			log_f("RefLd", "%s not found locally\n", w->refname);
 		} else {
 			perror("stat");
 			w->status = LOAD_FAIL;
