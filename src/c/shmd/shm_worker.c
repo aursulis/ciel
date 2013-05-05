@@ -93,7 +93,9 @@ void *shm_worker(void *work)
 			}
 		}
 	} else if(w->rq.header.type == IPC_REQ_WR) {
-		w->rsp.header.type = IPC_RSP_FAIL; // TODO: not implemented
+		log_f("ShmWrk", "Write requested for %s\n", w->rq.refname);
+		get_shm_name(w->rq.refname, w->rsp.shmname);
+		w->rsp.header.type = IPC_RSP_OK;
 	}
 
 	// notify requester of completion
