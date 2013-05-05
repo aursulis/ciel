@@ -12,6 +12,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "logging.h"
 #include "options.h"
 #include "ipc_server.h"
 
@@ -45,13 +46,6 @@ static int get_lock_file(void)
 	return lock_fd;
 }
 
-static void setup_log_file(time_t *t)
-{
-	char buf[32];
-	strftime(buf, sizeof(buf), "shmd-%Y%m%d-%H%M%S.log", localtime(t));
-	freopen(buf, "w", stderr);
-}
-
 static void write_pid(int fd)
 {
 	char buf[16];
@@ -73,17 +67,12 @@ int main(int argc, char **argv)
 			perror("daemon");
 			exit(EXIT_FAILURE);
 		}
-
-		setup_log_file(&start_time);
 	}
+
+	log_setup(&start_time, shmdopts.daemonise);
 
 	write_pid(lock_fd); // write PID _after_ having daemonised
 	close(lock_fd);
-
-	char buf[64];
-	strftime(buf, sizeof(buf), "Started shmd on %Y-%m-%d %H:%M:%S", localtime(&start_time));
-	fprintf(stderr, "%s\n", buf);
-	fflush(stderr);
 
 	pthread_t ipc_thread;
 	pthread_create(&ipc_thread, NULL, ipc_server_main, NULL);

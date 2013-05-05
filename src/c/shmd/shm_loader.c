@@ -12,6 +12,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "logging.h"
 #include "shm_loader.h"
 #include "options.h"
 
@@ -74,8 +75,7 @@ void *shm_ref_loader(void *loader_work) {
 
 		// exists) copy_into_shm
 		if(copy_into_shm(buf, w->loadedname)) {
-			fprintf(stderr, "[RefLd] Loaded %s from local blockstore\n", w->refname);
-			fflush(stderr);
+			log_f("RefLd", "Loaded %s from local blockstore\n", w->refname);
 			w->status = LOAD_SUCCESS;
 		} else {
 			w->status = LOAD_FAIL;
