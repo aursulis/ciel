@@ -15,7 +15,7 @@
 #include "logging.h"
 #include "ipc_server.h"
 #include "ipc_defs.h"
-#include "shm_loader.h"
+#include "shm_worker.h"
 
 #include <stdlib.h>
 #include <string.h>

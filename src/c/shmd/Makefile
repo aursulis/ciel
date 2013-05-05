@@ -5,7 +5,7 @@ all: libshmdc.so shmd
 libshmdc.so: ipc_integ.c
 	$(CC) $(CFLAGS) -fPIC -shared -Wl,-soname,$@ -o$@ $^ -lrt
 
-shmd: shm_loader.o options.o ipc_server.o logging.o main.o
+shmd: shm_worker.o options.o ipc_server.o logging.o main.o
 	$(CC) $(CFLAGS) -o$@ $^ -lrt
 
 .PHONY: clean

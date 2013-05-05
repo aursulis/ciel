@@ -13,7 +13,7 @@
  */
 
 #include "logging.h"
-#include "shm_loader.h"
+#include "shm_worker.h"
 #include "options.h"
 
 #include <limits.h>

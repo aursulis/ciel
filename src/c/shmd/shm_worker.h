@@ -12,8 +12,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef SHM_LOADER_H
-#define SHM_LOADER_H
+#ifndef SHM_WORKER_H
+#define SHM_WORKER_H
 
 #include "ipc_defs.h"
 
