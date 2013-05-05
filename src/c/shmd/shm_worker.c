@@ -36,7 +36,7 @@
  * however Linux does this, providing with a very convenient way to load files
  * into shared memory
  */
-static bool copy_into_shm(char *src_name, char *loaded_name)
+static bool copy_into_shm(char *src_name)
 {
 	pid_t child = fork();
 	if(child == -1) {
@@ -50,13 +50,13 @@ static bool copy_into_shm(char *src_name, char *loaded_name)
 	} else {
 		int status = 0;
 		waitpid(child, &status, 0);
-		if(WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-			snprintf(loaded_name, PATH_MAX, SHM_PATH "%s", basename(src_name));
-			return true;
-		} else {
-			return false;
-		}
+		return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 	}
+}
+
+static void get_shm_name(const char *refname, char *shmname)
+{
+	snprintf(shmname, PATH_MAX, SHM_PATH "%s", basename(refname));
 }
 
 void *shm_worker(void *work)
@@ -76,8 +76,9 @@ void *shm_worker(void *work)
 			// TODO: check memory availability
 
 			// exists) copy_into_shm
-			if(copy_into_shm(w->rq.refname, w->rsp.shmname)) {
+			if(copy_into_shm(w->rq.refname)) {
 				log_f("ShmWrk", "Loaded %s from local blockstore\n", w->rq.refname);
+				get_shm_name(w->rq.refname, w->rsp.shmname);
 				w->rsp.header.type = IPC_RSP_OK;
 			} else {
 				w->rsp.header.type = IPC_RSP_FAIL;
