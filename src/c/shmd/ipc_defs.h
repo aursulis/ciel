@@ -23,17 +23,20 @@
 
 enum ipc_message_t { IPC_REQ_LD, IPC_REQ_WR, IPC_RSP_OK, IPC_RSP_FAIL };
 
-struct ipc_header {
+struct ipc_header
+{
 	size_t len;
 	enum ipc_message_t type;
 };
 
-struct ipc_request {
+struct ipc_request
+{
 	struct ipc_header header;
 	char refname[PATH_MAX];
 };
 
-struct ipc_response {
+struct ipc_response
+{
 	struct ipc_header header;
 	char shmname[PATH_MAX];
 };

@@ -18,7 +18,8 @@
 #include <limits.h>
 #include <stdbool.h>
 
-struct shmd_options {
+struct shmd_options
+{
 	bool daemonise;
 	char bs_path[PATH_MAX];
 	int shmd_id;

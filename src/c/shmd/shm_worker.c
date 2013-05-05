@@ -36,7 +36,8 @@
  * however Linux does this, providing with a very convenient way to load files
  * into shared memory
  */
-static bool copy_into_shm(char *src_name, char *loaded_name) {
+static bool copy_into_shm(char *src_name, char *loaded_name)
+{
 	pid_t child = fork();
 	if(child == -1) {
 		perror("fork");
@@ -58,7 +59,8 @@ static bool copy_into_shm(char *src_name, char *loaded_name) {
 	}
 }
 
-void *shm_worker(void *work) {
+void *shm_worker(void *work)
+{
 	pthread_detach(pthread_self());
 	struct shm_worker_w *w = (struct shm_worker_w *)work;
 

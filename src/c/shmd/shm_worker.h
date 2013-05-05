@@ -21,7 +21,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-struct shm_worker_w {
+struct shm_worker_w
+{
 	struct ipc_request rq;
 	struct ipc_response rsp;
 	int replyfd;
