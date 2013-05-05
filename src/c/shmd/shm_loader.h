@@ -15,21 +15,20 @@
 #ifndef SHM_LOADER_H
 #define SHM_LOADER_H
 
+#include "ipc_defs.h"
+
 #include <limits.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
-enum loader_status_t { LOAD_SUCCESS, LOAD_FAIL };
-
-struct ref_loader_work {
-	char refname[PATH_MAX];
-	char loadedname[PATH_MAX];
-	enum loader_status_t status;
+struct shm_worker_w {
+	struct ipc_request rq;
+	struct ipc_response rsp;
 	int replyfd;
 	struct sockaddr_un replyaddr;
 	socklen_t replylen;
 };
 
-void *shm_ref_loader(void *loader_work);
+void *shm_worker(void *work);
 
 #endif

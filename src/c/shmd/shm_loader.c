@@ -58,38 +58,39 @@ static bool copy_into_shm(char *src_name, char *loaded_name) {
 	}
 }
 
-void *shm_ref_loader(void *loader_work) {
+void *shm_worker(void *work) {
 	pthread_detach(pthread_self());
-	struct ref_loader_work *w = (struct ref_loader_work *)loader_work;
+	struct shm_worker_w *w = (struct shm_worker_w *)work;
 
-	log_f("RefLd", "Loader thread started for %s\n", w->refname);
+	log_f("ShmWrk", "Worker thread started for %s\n", w->rq.refname);
 
-	// form fully qualified pathname
-	char buf[PATH_MAX];
-	strncpy(buf, w->refname, sizeof(buf));
-	//snprintf(buf, sizeof(buf), "%s%s%s", shmdopts.bs_path, BS_SUFFIX, w->refname); // XXX: this might not be necessary (thus wrong)
+	if(w->rq.header.type == IPC_REQ_LD) {
+		log_f("ShmWrk", "Load requested for %s\n", w->rq.refname);
 
-	struct stat st;
-	int rc = stat(buf, &st);
+		struct stat st;
+		int rc = stat(w->rq.refname, &st);
 
-	if(rc == 0) {
-		// TODO: check memory availability
+		if(rc == 0) {
+			// TODO: check memory availability
 
-		// exists) copy_into_shm
-		if(copy_into_shm(buf, w->loadedname)) {
-			log_f("RefLd", "Loaded %s from local blockstore\n", w->refname);
-			w->status = LOAD_SUCCESS;
+			// exists) copy_into_shm
+			if(copy_into_shm(w->rq.refname, w->rsp.shmname)) {
+				log_f("ShmWrk", "Loaded %s from local blockstore\n", w->rq.refname);
+				w->rsp.header.type = IPC_RSP_OK;
+			} else {
+				w->rsp.header.type = IPC_RSP_FAIL;
+			}
 		} else {
-			w->status = LOAD_FAIL;
+			if(errno == ENOENT) {
+				// TODO: notfound) broadcast to other shmds
+				log_f("ShmWrk", "%s not found locally\n", w->rq.refname);
+			} else {
+				perror("stat");
+				w->rsp.header.type = IPC_RSP_FAIL;
+			}
 		}
-	} else {
-		if(errno == ENOENT) {
-			// TODO: notfound) broadcast to other shmds
-			log_f("RefLd", "%s not found locally\n", w->refname);
-		} else {
-			perror("stat");
-			w->status = LOAD_FAIL;
-		}
+	} else if(w->rq.header.type == IPC_REQ_WR) {
+		w->rsp.header.type = IPC_RSP_FAIL; // TODO: not implemented
 	}
 
 	// notify requester of completion

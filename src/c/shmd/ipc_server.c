@@ -76,47 +76,37 @@ void *ipc_server_main(void *ignored)
 		}
 
 		if(FD_ISSET(sock_fd, &work_set)) {
-			struct ipc_request rq;
-			ssize_t bytes = recvfrom(sock_fd, &rq, sizeof(rq), 0,
+			struct shm_worker_w *w = (struct shm_worker_w *)malloc(sizeof(struct shm_worker_w));
+
+			ssize_t bytes = recvfrom(sock_fd, &w->rq, sizeof(w->rq), 0,
 					(struct sockaddr *)&srcaddr, &srclen);
 
-			if(rq.header.type == IPC_REQ_LD) {
-				log_f("IpcSrv", "received request to load %s\n", rq.refname);
-
-				struct ref_loader_work *w = (struct ref_loader_work *)malloc(sizeof(struct ref_loader_work));
-				strncpy(w->refname, rq.refname, sizeof(w->refname));
-				w->replyaddr = srcaddr;
-				w->replylen = srclen;
-				w->replyfd = pipe_fd[1];
-
-				pthread_t loader_thread;
-				pthread_create(&loader_thread, NULL, shm_ref_loader, (void *)w);
-			} else if(rq.header.type == IPC_REQ_WR) {
-				log_f("IpcSrv", "received request to write %s\n", rq.refname);
-
-				// TODO: do something
+			if(w->rq.header.type == IPC_REQ_LD) {
+				log_f("IpcSrv", "received request to load %s\n", w->rq.refname);
+			} else if(w->rq.header.type == IPC_REQ_WR) {
+				log_f("IpcSrv", "received request to write %s\n", w->rq.refname);
 			}
+
+			w->rsp.header.len = sizeof(w->rsp);
+			w->replyaddr = srcaddr;
+			w->replylen = srclen;
+			w->replyfd = pipe_fd[1];
+
+			pthread_t worker_thread;
+			pthread_create(&worker_thread, NULL, shm_worker, (void *)w);
 		}
 
 		if(FD_ISSET(pipe_fd[0], &work_set)) {
-			struct ref_loader_work *w = NULL;
+			struct shm_worker_w *w = NULL;
 			ssize_t bytes = read(pipe_fd[0], &w, sizeof(w));
-			
-			struct ipc_response rsp;
-			rsp.header.len = sizeof(rsp);
 
-			if(w->status == LOAD_SUCCESS) {
-				rsp.header.type = IPC_RSP_OK;
-				strncpy(rsp.shmname, w->loadedname, sizeof(rsp.shmname));
-
-				log_f("IpcSrv", "received load_success for %s\n", rsp.shmname);
-			} else if(w->status == LOAD_FAIL) {
-				rsp.header.type = IPC_RSP_FAIL;
-
-				log_f("IpcSrv", "received load_fail\n");
+			if(w->rsp.header.type == IPC_RSP_OK) {
+				log_f("IpcSrv", "received success for %s\n", w->rsp.shmname);
+			} else if(w->rsp.header.type == IPC_RSP_FAIL) {
+				log_f("IpcSrv", "received fail for %s\n", w->rq.refname);
 			}
 
-			ssize_t send_bytes = sendto(sock_fd, &rsp, sizeof(rsp), 0,
+			ssize_t send_bytes = sendto(sock_fd, &w->rsp, sizeof(w->rsp), 0,
 					(struct sockaddr *)&w->replyaddr, w->replylen);
 
 			free(w);
