@@ -90,6 +90,7 @@ static int ipc_do_request(const struct ipc_request *rq, struct ipc_response *rsp
 			(struct sockaddr *)&servaddr, &servlen);
 
 	close(sock_fd);
+	unlink(get_client_dom_addr());
 	return 0;
 }
 
