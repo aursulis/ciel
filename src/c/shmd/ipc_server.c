@@ -78,14 +78,29 @@ void *ipc_server_main(void *ignored)
 
 		if(FD_ISSET(sock_fd, &work_set)) {
 			struct shm_worker_w *w = (struct shm_worker_w *)malloc(sizeof(struct shm_worker_w));
+			char buf[sizeof(struct ipc_commit)];
 
-			ssize_t bytes = recvfrom(sock_fd, &w->rq, sizeof(w->rq), 0,
+			ssize_t bytes = recvfrom(sock_fd, buf, sizeof(buf), 0,
 					(struct sockaddr *)&srcaddr, &srclen);
 
-			if(w->rq.header.type == IPC_REQ_LD) {
+			struct ipc_header *h = (struct ipc_header *)buf;
+			if(h->type == IPC_REQ_LD) {
+				struct ipc_request *rq = (struct ipc_request *)buf;
+				w->rq = *rq;
 				log_f("IpcSrv", "received request to load %s\n", w->rq.refname);
-			} else if(w->rq.header.type == IPC_REQ_WR) {
+			} else if(h->type == IPC_REQ_WR) {
+				struct ipc_request *rq = (struct ipc_request *)buf;
+				w->rq = *rq;
 				log_f("IpcSrv", "received request to write %s\n", w->rq.refname);
+			} else if(h->type == IPC_REQ_CI) {
+				struct ipc_commit *ci = (struct ipc_commit *)buf;
+				w->rq.header.len = sizeof(w->rq);
+				w->rq.header.type = IPC_REQ_CI;
+				strncpy(w->rq.refname, ci->oldname, sizeof(w->rq.refname));
+				w->rsp.header.len = sizeof(w->rsp);
+				w->rsp.header.type = IPC_REQ_CI;
+				strncpy(w->rsp.shmname, ci->newname, sizeof(w->rsp.shmname));
+				log_f("IpcSrv", "received request to commit %s as %s\n", w->rq.refname, w->rsp.shmname);
 			}
 
 			w->rsp.header.len = sizeof(w->rsp);

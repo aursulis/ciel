@@ -34,3 +34,8 @@ def send_write_request(ref_name):
     return_code = _lib.ipc_send_write_request(ref_name, shm_name)
     ciel.log('got back %d, %s' % (return_code, shm_name.value), 'SHMDC', logging.INFO)
     return (return_code, shm_name.value)
+
+def send_commit_request(old_name, new_name):
+    ciel.log('sending request to commit %s as %s' % (old_name, new_name), 'SHMDC', logging.INFO)
+    return_code = _lib.ipc_send_commit_request(old_name, new_name)
+    return return_code == 0

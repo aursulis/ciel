@@ -36,7 +36,7 @@ void parse_options(int argc, char **argv, struct shmd_options *opts)
 {
 	bool path_provided = false;
 	opts->daemonise = false;
-	opts->shmd_id = -1;
+	opts->shmd_id = 0;
 	opts->nshmds = 1;
 	char bs_dir[PATH_MAX];
 

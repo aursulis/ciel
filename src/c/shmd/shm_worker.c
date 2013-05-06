@@ -55,6 +55,24 @@ static bool copy_into_shm(char *src_name)
 	}
 }
 
+static bool invoke_ln(char *src_name, char *dst_name)
+{
+	pid_t child = fork();
+	if(child == -1) {
+		perror("fork");
+		return false;
+	}
+
+	if(child == 0) {
+		execl("/bin/ln", "/bin/ln", src_name, dst_name, (char *)NULL);
+		return false;
+	} else {
+		int status = 0;
+		waitpid(child, &status, 0);
+		return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+	}
+}
+
 static void get_shm_name(const char *refname, char *shmname)
 {
 	snprintf(shmname, PATH_MAX, SHM_PATH "%s", basename(refname));
@@ -142,6 +160,17 @@ void *shm_worker(void *work)
 	} else if(w->rq.header.type == IPC_REQ_WR) {
 		log_f("ShmWrk", "Write requested for %s\n", w->rq.refname);
 		get_shm_name(w->rq.refname, w->rsp.shmname);
+		w->rsp.header.type = IPC_RSP_OK;
+		w->stage = STAGE_RSP;
+	} else if(w->rq.header.type == IPC_REQ_CI) {
+		log_f("ShmWrk", "Commit requested for %s as %s\n", w->rq.refname, w->rsp.shmname);
+
+		char oldname[PATH_MAX], newname[PATH_MAX];
+		get_shm_name(w->rq.refname, oldname);
+		get_shm_name(w->rsp.shmname, newname);
+
+		invoke_ln(oldname, newname);
+
 		w->rsp.header.type = IPC_RSP_OK;
 		w->stage = STAGE_RSP;
 	}

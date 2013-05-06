@@ -151,7 +151,7 @@ class BlockStore:
 
     def commit_file(self, old_name, new_name):
         if old_name in self.filename_cache:
-            # TODO: send commit request
+            ciel.runtime.shmd_client.send_commit_request(old_name, new_name)
             del self.filename_cache[old_name]
             return
         
@@ -171,7 +171,8 @@ class BlockStore:
 
     def commit_producer(self, id):
         ciel.log.error('Committing file for output %s' % id, 'BLOCKSTORE', logging.DEBUG)
-        self.commit_file(self.producer_filename(id), self.filename(id))
+        bsname = os.path.join(self.base_dir, '.producer:%s' % id)
+        self.commit_file(bsname, self.filename(id))
         
     def choose_best_netloc(self, netlocs):
         for netloc in netlocs:

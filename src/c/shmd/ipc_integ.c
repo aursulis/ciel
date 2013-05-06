@@ -47,7 +47,7 @@ void ipc_init_client(const char *bs_path)
 	snprintf(shmd_socket_file, sizeof(shmd_socket_file), "%s/../" SOCKET_FILE, bs_path);
 }
 
-static int ipc_do_request(const struct ipc_request *rq, struct ipc_response *rsp) // XXX: sock_fd is not being closed on errors
+static int ipc_do_request(const void *rq, size_t rq_len, struct ipc_response *rsp) // XXX: sock_fd is not being closed on errors
 {
 	// TODO: if socket creation becomes a bottleneck, consider having
 	// a singleton socket that is reused (and mutex protected)
@@ -78,7 +78,7 @@ static int ipc_do_request(const struct ipc_request *rq, struct ipc_response *rsp
 		return -1;
 	}
 
-	ssize_t bytes = send(sock_fd, rq, sizeof(*rq), 0);
+	ssize_t bytes = send(sock_fd, rq, rq_len, 0);
 	if(bytes == -1) {
 		perror("send");
 		return -1;
@@ -103,7 +103,7 @@ int ipc_send_load_request(const char *refname, char *shmname)
 
 	struct ipc_response rsp;
 
-	int rc = ipc_do_request(&rq, &rsp);
+	int rc = ipc_do_request(&rq, sizeof(rq), &rsp);
 
 	if(rsp.header.type == IPC_RSP_OK) {
 		strncpy(shmname, rsp.shmname, sizeof(rsp.shmname));
@@ -122,7 +122,7 @@ int ipc_send_write_request(const char *refname, char *shmname)
 
 	struct ipc_response rsp;
 
-	int rc = ipc_do_request(&rq, &rsp);
+	int rc = ipc_do_request(&rq, sizeof(rq), &rsp);
 
 	if(rsp.header.type == IPC_RSP_OK) {
 		strncpy(shmname, rsp.shmname, sizeof(rsp.shmname));
@@ -130,4 +130,19 @@ int ipc_send_write_request(const char *refname, char *shmname)
 	} else if(rsp.header.type == IPC_RSP_FAIL) {
 		return -1;
 	}
+}
+
+int ipc_send_commit_request(const char *oldname, const char *newname)
+{
+	struct ipc_commit ci;
+	ci.header.len = sizeof(ci);
+	ci.header.type = IPC_REQ_CI;
+	strncpy(ci.oldname, oldname, sizeof(ci.oldname));
+	strncpy(ci.newname, newname, sizeof(ci.newname));
+
+	struct ipc_response rsp;
+
+	int rc = ipc_do_request(&ci, sizeof(ci), &rsp);
+
+	return rsp.header.type == IPC_RSP_OK ? 0 : -1;
 }

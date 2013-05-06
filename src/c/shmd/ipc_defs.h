@@ -21,7 +21,7 @@
 #define CLIENT_SOCK_TEMPL "/tmp/shmdc-XXXXXX"
 #define SOCKET_FILE "shmd.sock"
 
-enum ipc_message_t { IPC_REQ_LD, IPC_REQ_WR, IPC_RSP_OK, IPC_RSP_FAIL };
+enum ipc_message_t { IPC_REQ_LD, IPC_REQ_WR, IPC_REQ_CI, IPC_RSP_OK, IPC_RSP_FAIL };
 
 struct ipc_header
 {
@@ -40,6 +40,13 @@ struct ipc_response
 {
 	struct ipc_header header;
 	char shmname[PATH_MAX];
+};
+
+struct ipc_commit
+{
+	struct ipc_header header;
+	char oldname[PATH_MAX];
+	char newname[PATH_MAX];
 };
 
 #endif
