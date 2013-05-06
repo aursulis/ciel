@@ -15,6 +15,7 @@
 #ifndef SHM_FS_H
 #define SHM_FS_H
 
+#include <stddef.h>
 #include <limits.h>
 
 #define SHMFS_NFILES   128   // number of directory entries
@@ -67,8 +68,7 @@ struct shmfs
 	struct block blocks[SHMFS_NBLOCKS]; // direct access to data
 };
 
-void shmfs_setptr(char *fsptr);
-void shmfs_init();
+void shmfs_init(int id);
 int shmfs_lookup(const char *name);
 int shmfs_create(const char *name);
 int shmfs_link(const char *target, const char *name);

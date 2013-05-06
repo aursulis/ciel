@@ -12,10 +12,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef SHM_FS_CONTROL_H
-#define SHM_FS_CONTROL_H
+#ifndef SHM_FS_ARCH_H
+#define SHM_FS_ARCH_H
 
-void shmfs_control_init();
+#include "shm_fs.h"
+
+void shmfs_control_init(int id);
+struct shmfs *shmfs_data_init(int id);
 
 void get_stats_lock();
 void get_dir_lock();

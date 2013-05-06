@@ -13,7 +13,7 @@
  */
 
 #include "shm_fs.h"
-#include "shm_fs_control.h"
+#include "shm_fs_arch.h"
 
 #ifdef BUILD_LINUX
 	#include "shm_fs_linux.h"
@@ -25,39 +25,41 @@
 
 static struct shmfs *fs = NULL;
 
-void shmfs_setptr(char *fsptr)
+void shmfs_init(int id)
 {
-	fs = (struct shmfs *)fsptr;
-}
+	shmfs_control_init(id);
+	fs = shmfs_data_init(id);
 
-void shmfs_init()
-{
-	get_stats_lock();
-	get_dir_lock();
-	get_inodes_lock();
-	get_fat_lock();
+	if(id == 0) {
+		get_stats_lock();
+		get_dir_lock();
+		get_inodes_lock();
+		get_fat_lock();
 
-	fs->stats.nwrites = 0;
-	fs->stats.free_dirents = SHMFS_NFILES;
-	fs->stats.free_inodes = SHMFS_NINODES;
-	fs->stats.free_blocks = SHMFS_NBLOCKS;
+		fs->stats.nwrites = 0;
+		fs->stats.free_dirents = SHMFS_NFILES;
+		fs->stats.free_inodes = SHMFS_NINODES;
+		fs->stats.free_blocks = SHMFS_NBLOCKS;
 
-	for(int i = 0; i < SHMFS_NFILES; ++i) {
-		fs->files[i].inode_id = MAGIC_INVALID_ENTRY;
+		for(int i = 0; i < SHMFS_NFILES; ++i) {
+			fs->files[i].inode_id = MAGIC_INVALID_ENTRY;
+		}
+
+		for(int i = 0; i < SHMFS_NINODES; ++i) {
+			fs->inodes[i].flags.valid = 0;
+		}
+
+		for(int i = 0; i < SHMFS_NBLOCKS; ++i) {
+			fs->fat[i] = MAGIC_BLOCK_FREE;
+		}
+
+		release_fat_lock();
+		release_inodes_lock();
+		release_dir_lock();
+		release_stats_lock();
 	}
 
-	for(int i = 0; i < SHMFS_NINODES; ++i) {
-		fs->inodes[i].flags.valid = 0;
-	}
-
-	for(int i = 0; i < SHMFS_NBLOCKS; ++i) {
-		fs->fat[i] = MAGIC_BLOCK_FREE;
-	}
-
-	release_fat_lock();
-	release_inodes_lock();
-	release_dir_lock();
-	release_stats_lock();
+	// XXX: BARRIER HERE
 }
 
 int shmfs_lookup(const char *name)
