@@ -97,65 +97,75 @@ void *shm_worker(void *work)
 	if(w->rq.header.type == IPC_REQ_LD) {
 		log_f("ShmWrk", "Load requested for %s\n", w->rq.refname);
 
+		char buf[PATH_MAX];
+		get_shm_name(w->rq.refname, buf);
+
 		struct stat st;
-		int rc = stat(w->rq.refname, &st);
+		int rc = stat(buf, &st);
 
-		if(rc == 0) {
-			// TODO: check memory availability
-
-			// exists) copy_into_shm
-			if(copy_into_shm(w->rq.refname)) {
-				log_f("ShmWrk", "Loaded %s from local blockstore\n", w->rq.refname);
-				get_shm_name(w->rq.refname, w->rsp.shmname);
-				w->rsp.header.type = IPC_RSP_OK;
-			} else {
-				w->rsp.header.type = IPC_RSP_FAIL;
-			}
-
+		if(rc == 0) { // already present in shm
+			strncpy(w->rsp.shmname, buf, sizeof(w->rsp.shmname));
+			w->rsp.header.type = IPC_RSP_OK;
 			w->stage = STAGE_RSP;
 		} else {
-			if(errno == ENOENT) {
-				log_f("ShmWrk", "%s not found locally\n", w->rq.refname);
-				if(w->recursive) {
-					int pipe_fd[2];
-					if(pipe(pipe_fd) == -1) {
-						perror("pipe");
-						pthread_exit(NULL);
-					}
+			rc = stat(w->rq.refname, &st);
+			if(rc == 0) {
+				// TODO: check memory availability
 
-					w->stage = STAGE_RECURSIVE_RQ;
-					w->rq.header.replyfd = pipe_fd[1];
-					w->rsp.header.type = IPC_RSP_FAIL; // fail by default unless some recursive request succeeds
-
-					log_f("ShmWrk", "making recursive call for %s\n", w->rq.refname);
-					write(interdaemon_get_pipe(), &w, sizeof(w));
-
-					int nresponses = 0;
-					while(nresponses < shmdopts.nshmds-1) {
-						struct ipc_response rsp;
-						read(pipe_fd[0], &rsp, sizeof(rsp));
-
-						log_f("ShmWrk", "got back recursive response for %s\n", w->rq.refname);
-						if(rsp.header.type == IPC_RSP_OK) {
-							w->rsp = rsp;
-							// TODO: on SCC, open the file and adjust filename
-						}
-
-						++nresponses;
-					}
-
-					close(pipe_fd[0]);
-					close(pipe_fd[1]);
+				// exists) copy_into_shm
+				if(copy_into_shm(w->rq.refname)) {
+					log_f("ShmWrk", "Loaded %s from local blockstore\n", w->rq.refname);
+					get_shm_name(w->rq.refname, w->rsp.shmname);
+					w->rsp.header.type = IPC_RSP_OK;
 				} else {
-					log_f("ShmWrk", "nonrecursive call for %s, failing\n", w->rq.refname);
 					w->rsp.header.type = IPC_RSP_FAIL;
 				}
-			} else {
-				perror("stat");
-				w->rsp.header.type = IPC_RSP_FAIL;
-			}
 
-			w->stage = STAGE_RSP;
+				w->stage = STAGE_RSP;
+			} else {
+				if(errno == ENOENT) {
+					log_f("ShmWrk", "%s not found locally\n", w->rq.refname);
+					if(w->recursive) {
+						int pipe_fd[2];
+						if(pipe(pipe_fd) == -1) {
+							perror("pipe");
+							pthread_exit(NULL);
+						}
+
+						w->stage = STAGE_RECURSIVE_RQ;
+						w->rq.header.replyfd = pipe_fd[1];
+						w->rsp.header.type = IPC_RSP_FAIL; // fail by default unless some recursive request succeeds
+
+						log_f("ShmWrk", "making recursive call for %s\n", w->rq.refname);
+						write(interdaemon_get_pipe(), &w, sizeof(w));
+
+						int nresponses = 0;
+						while(nresponses < shmdopts.nshmds-1) {
+							struct ipc_response rsp;
+							read(pipe_fd[0], &rsp, sizeof(rsp));
+
+							log_f("ShmWrk", "got back recursive response for %s\n", w->rq.refname);
+							if(rsp.header.type == IPC_RSP_OK) {
+								w->rsp = rsp;
+								// TODO: on SCC, open the file and adjust filename
+							}
+
+							++nresponses;
+						}
+
+						close(pipe_fd[0]);
+						close(pipe_fd[1]);
+					} else {
+						log_f("ShmWrk", "nonrecursive call for %s, failing\n", w->rq.refname);
+						w->rsp.header.type = IPC_RSP_FAIL;
+					}
+				} else {
+					perror("stat");
+					w->rsp.header.type = IPC_RSP_FAIL;
+				}
+
+				w->stage = STAGE_RSP;
+			}
 		}
 	} else if(w->rq.header.type == IPC_REQ_WR) {
 		log_f("ShmWrk", "Write requested for %s\n", w->rq.refname);
