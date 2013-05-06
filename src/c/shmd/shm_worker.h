@@ -18,8 +18,11 @@
 #include "ipc_defs.h"
 
 #include <limits.h>
+#include <stdbool.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+
+enum shm_worker_stage_t { STAGE_RQ, STAGE_RECURSIVE_RQ, STAGE_RSP };
 
 struct shm_worker_w
 {
@@ -28,6 +31,8 @@ struct shm_worker_w
 	int replyfd;
 	struct sockaddr_un replyaddr;
 	socklen_t replylen;
+	bool recursive;
+	enum shm_worker_stage_t stage;
 };
 
 void *shm_worker(void *work);

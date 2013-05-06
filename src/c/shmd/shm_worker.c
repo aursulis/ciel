@@ -14,6 +14,7 @@
 
 #include "logging.h"
 #include "shm_worker.h"
+#include "interdaemon.h"
 #include "options.h"
 
 #include <limits.h>
@@ -59,12 +60,21 @@ static void get_shm_name(const char *refname, char *shmname)
 	snprintf(shmname, PATH_MAX, SHM_PATH "%s", basename(refname));
 }
 
+static void normalise_refname(char *refname)
+{
+	char buf[PATH_MAX];
+	snprintf(buf, sizeof(buf), "%s" BS_SUFFIX "%s", shmdopts.bs_path, basename(refname));
+	strncpy(refname, buf, PATH_MAX);
+}
+
 void *shm_worker(void *work)
 {
 	pthread_detach(pthread_self());
 	struct shm_worker_w *w = (struct shm_worker_w *)work;
 
 	log_f("ShmWrk", "Worker thread started for %s\n", w->rq.refname);
+
+	normalise_refname(w->rq.refname);
 
 	if(w->rq.header.type == IPC_REQ_LD) {
 		log_f("ShmWrk", "Load requested for %s\n", w->rq.refname);
@@ -83,19 +93,57 @@ void *shm_worker(void *work)
 			} else {
 				w->rsp.header.type = IPC_RSP_FAIL;
 			}
+
+			w->stage = STAGE_RSP;
 		} else {
 			if(errno == ENOENT) {
-				// TODO: notfound) broadcast to other shmds
 				log_f("ShmWrk", "%s not found locally\n", w->rq.refname);
+				if(w->recursive) {
+					int pipe_fd[2];
+					if(pipe(pipe_fd) == -1) {
+						perror("pipe");
+						pthread_exit(NULL);
+					}
+
+					w->stage = STAGE_RECURSIVE_RQ;
+					w->rq.header.replyfd = pipe_fd[1];
+					w->rsp.header.type = IPC_RSP_FAIL; // fail by default unless some recursive request succeeds
+
+					log_f("ShmWrk", "making recursive call for %s\n", w->rq.refname);
+					write(interdaemon_get_pipe(), &w, sizeof(w));
+
+					int nresponses = 0;
+					while(nresponses < shmdopts.nshmds-1) {
+						struct ipc_response rsp;
+						read(pipe_fd[0], &rsp, sizeof(rsp));
+
+						log_f("ShmWrk", "got back recursive response for %s\n", w->rq.refname);
+						if(rsp.header.type == IPC_RSP_OK) {
+							w->rsp = rsp;
+							// TODO: on SCC, open the file and adjust filename
+						}
+
+						++nresponses;
+					}
+
+					close(pipe_fd[0]);
+					close(pipe_fd[1]);
+				} else {
+					log_f("ShmWrk", "nonrecursive call for %s, failing\n", w->rq.refname);
+					w->rsp.header.type = IPC_RSP_FAIL;
+				}
 			} else {
 				perror("stat");
 				w->rsp.header.type = IPC_RSP_FAIL;
 			}
+
+			w->stage = STAGE_RSP;
 		}
 	} else if(w->rq.header.type == IPC_REQ_WR) {
 		log_f("ShmWrk", "Write requested for %s\n", w->rq.refname);
 		get_shm_name(w->rq.refname, w->rsp.shmname);
 		w->rsp.header.type = IPC_RSP_OK;
+		w->stage = STAGE_RSP;
 	}
 
 	// notify requester of completion

@@ -29,6 +29,7 @@ static void usage(const char *argv0)
 	fprintf(stderr, "  -b PATH, --blockstore PATH : specify blockstore path\n");
 	fprintf(stderr, "  -d,      --daemon          : run as daemon, log file in blockstore path\n");
 	fprintf(stderr, "  -i NUM,  --id NUM          : specify ID of this shmd, must be unique\n");
+	fprintf(stderr, "  -n NUM,  --numshmds NUM    : specify number of shmds running\n");
 }
 
 void parse_options(int argc, char **argv, struct shmd_options *opts)
@@ -36,17 +37,19 @@ void parse_options(int argc, char **argv, struct shmd_options *opts)
 	bool path_provided = false;
 	opts->daemonise = false;
 	opts->shmd_id = -1;
+	opts->nshmds = 1;
 	char bs_dir[PATH_MAX];
 
 	struct option options[] = {
 		{"blockstore", required_argument, NULL, 'b'},
 		{"daemon",     no_argument,       NULL, 'd'},
 		{"id",         required_argument, NULL, 'i'},
+		{"numshdms",   required_argument, NULL, 'n'},
 		{0, 0, 0, 0}
 	};
 
 	int c;
-	while((c = getopt_long(argc, argv, "db:", options, NULL)) != -1) {
+	while((c = getopt_long(argc, argv, "db:i:n:", options, NULL)) != -1) {
 		switch(c) {
 			case 'b':
 				strncpy(bs_dir, optarg, PATH_MAX);
@@ -57,6 +60,9 @@ void parse_options(int argc, char **argv, struct shmd_options *opts)
 				break;
 			case 'i':
 				opts->shmd_id = atoi(optarg);
+				break;
+			case 'n':
+				opts->nshmds = atoi(optarg);
 				break;
 			case '?':
 				usage(argv[0]);

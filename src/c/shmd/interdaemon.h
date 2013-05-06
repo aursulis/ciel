@@ -12,34 +12,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef IPC_DEFS_H
-#define IPC_DEFS_H
+#ifndef INTERDAEMON_H
+#define INTERDAEMON_H
 
-#include <limits.h>
-#include <stddef.h>
-
-#define CLIENT_SOCK_TEMPL "/tmp/shmdc-XXXXXX"
-#define SOCKET_FILE "shmd.sock"
-
-enum ipc_message_t { IPC_REQ_LD, IPC_REQ_WR, IPC_RSP_OK, IPC_RSP_FAIL };
-
-struct ipc_header
-{
-	size_t len;
-	int replyfd;
-	enum ipc_message_t type;
-};
-
-struct ipc_request
-{
-	struct ipc_header header;
-	char refname[PATH_MAX];
-};
-
-struct ipc_response
-{
-	struct ipc_header header;
-	char shmname[PATH_MAX];
-};
+int interdaemon_get_pipe();
+void *interdaemon_server_main(void *ignored);
 
 #endif

@@ -15,6 +15,7 @@
 #include "logging.h"
 #include "options.h"
 #include "ipc_server.h"
+#include "interdaemon.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -74,10 +75,13 @@ int main(int argc, char **argv)
 	write_pid(lock_fd); // write PID _after_ having daemonised
 	close(lock_fd);
 
-	pthread_t ipc_thread;
+	pthread_t ipc_thread, interdaemon_thread;
+
 	pthread_create(&ipc_thread, NULL, ipc_server_main, NULL);
+	pthread_create(&interdaemon_thread, NULL, interdaemon_server_main, NULL);
 
 	pthread_join(ipc_thread, NULL);
+	pthread_join(interdaemon_thread, NULL);
 
 	unlink(LOCK_FILE);
 	return EXIT_SUCCESS;

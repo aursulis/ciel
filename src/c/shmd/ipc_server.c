@@ -17,6 +17,7 @@
 #include "ipc_defs.h"
 #include "shm_worker.h"
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -91,6 +92,8 @@ void *ipc_server_main(void *ignored)
 			w->replyaddr = srcaddr;
 			w->replylen = srclen;
 			w->replyfd = pipe_fd[1];
+			w->recursive = true;
+			w->stage = STAGE_RQ;
 
 			pthread_t worker_thread;
 			pthread_create(&worker_thread, NULL, shm_worker, (void *)w);
