@@ -1,6 +1,6 @@
 CFLAGS = -Wall -g -std=c99 -D_GNU_SOURCE -pthread
 
-all: libshmdc.so shmd
+all: libshmdc.so shmd test
 
 libshmdc.so: ipc_integ.c
 	$(CC) $(CFLAGS) -fPIC -shared -Wl,-soname,$@ -o$@ $^ -lrt
@@ -8,6 +8,9 @@ libshmdc.so: ipc_integ.c
 shmd: shm_worker.o options.o ipc_server.o interdaemon_linux.o logging.o main.o
 	$(CC) $(CFLAGS) -o$@ $^ -lrt
 
+test: libshmdc.so test.o
+	$(CC) $(CFLAGS) -o$@ $^ -L./ -lshmdc
+
 .PHONY: clean
 clean:
-	rm -f *.o shmd libshmdc.so
+	rm -f *.o shmd libshmdc.so test
