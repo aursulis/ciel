@@ -150,7 +150,33 @@ int shmfs_create(const char *name, bool openwrite)
 
 int shmfs_link(const char *target, const char *name)
 {
-	return 0;
+	int rc = -1;
+
+	int inode_id = shmfs_lookup(basename(target));
+	assert(inode_id != MAGIC_INVALID_ENTRY);
+
+	get_dir_lock();
+	for(int i = 0; i < SHMFS_NFILES; ++i) {
+		if(fs->files[i].inode_id == MAGIC_INVALID_ENTRY) {
+			fs->files[i].inode_id = inode_id;
+			strncpy(fs->files[i].name, basename(name), sizeof(fs->files[i].name));
+
+			get_inodes_lock();
+			fs->inodes[inode_id].nlinks++;
+			release_inodes_lock();
+
+			rc = 0;
+			break;
+		}
+	}
+	release_dir_lock();
+
+	if(rc == 0) {
+		get_stats_lock();
+		fs->stats.free_dirents--;
+		release_stats_lock();
+	}
+	return rc;
 }
 
 int shmfs_load_local(const char *name)
