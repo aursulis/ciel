@@ -163,6 +163,8 @@ int shmfs_get_write_filename(const char *name, char *shmname)
 		set_writer_fifo(inode_id, fifo_id);
 	} else {
 		fifo_id = get_writer_fifo(inode_id);
+		// XXX: we assume that all files opened for writing were created through this
+		// function; otherwise the above call returns garbage
 	}
 
 	form_fifo_name(shmname, fifo_id);
