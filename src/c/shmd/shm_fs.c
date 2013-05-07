@@ -26,6 +26,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
+
+#define SCHED_MAX_WRITES 2
 
 struct shmfs *fs = NULL;
 
@@ -173,6 +176,14 @@ int shmfs_link(const char *target, const char *name)
 
 int shmfs_load_local(const char *name)
 {
+	get_stats_lock();
+	while(fs->stats.nwrites > SCHED_MAX_WRITES) {
+		release_stats_lock();
+		sleep(1);
+		get_stats_lock();
+	}
+	release_stats_lock();
+
 	FILE *f_src = fopen(name, "rb");
 	int inode_id = shmfs_create(basename(name), true);
 	int blocks_reserved = 0;
