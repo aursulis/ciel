@@ -16,8 +16,8 @@
 #define SHM_FS_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <limits.h>
+#include <sys/types.h>
 
 #define SHMFS_NFILES   128   // number of directory entries
 #define SHMFS_NINODES  128   // number of inodes
@@ -44,7 +44,7 @@ struct inode
 		unsigned int committed : 1; // have writes to this inode been committed?
 	} flags;
 	int first_block;
-	size_t size; // in bytes, not blocks
+	off_t size; // in bytes, not blocks
 };
 
 struct block
@@ -78,6 +78,6 @@ int shmfs_load_local(const char *name);
 int shmfs_store_local(int inode_id, const char *name);
 int shmfs_deallocate(int inode_id);
 int shmfs_unlink(const char *name);
-size_t shmfs_getsize(const char *name);
+off_t shmfs_getsize(const char *name);
 
 #endif

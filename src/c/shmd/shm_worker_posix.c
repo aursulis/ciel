@@ -104,3 +104,14 @@ void perform_commit(const char *oldname, const char *newname)
 
 	invoke_ln(oldname_n, newname_n);
 }
+
+off_t get_file_size(const char *refname)
+{
+	char buf[PATH_MAX];
+	get_shm_name(refname, buf);
+
+	struct stat st;
+	int rc = stat(buf, &st);
+
+	return st.st_size;
+}

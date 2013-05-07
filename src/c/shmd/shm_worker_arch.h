@@ -16,11 +16,13 @@
 #define SHM_WORKER_ARCH_H
 
 #include <stdbool.h>
+#include <sys/types.h>
 
 bool is_present_in_shmfs(const char *refname);
 void open_for_reading(const char *refname, char *shmname);
 void open_for_writing(const char *refname, char *shmname);
 bool load_into_shmfs(const char *refname);
 void perform_commit(const char *oldname, const char *newname);
+off_t get_file_size(const char *refname);
 
 #endif

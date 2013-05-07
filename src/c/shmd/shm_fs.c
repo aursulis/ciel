@@ -235,12 +235,12 @@ int shmfs_unlink(const char *name)
 	return 0;
 }
 
-size_t shmfs_getsize(const char *name)
+off_t shmfs_getsize(const char *name)
 {
 	int inode_id = shmfs_lookup(name);
 	if(inode_id != MAGIC_INVALID_ENTRY) {
 		get_inodes_lock();
-		size_t result = fs->inodes[inode_id].size;
+		off_t result = fs->inodes[inode_id].size;
 		release_inodes_lock();
 		return result;
 	}
