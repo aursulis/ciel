@@ -12,12 +12,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef SHM_WORKER_LINUX_H
-#define SHM_WORKER_LINUX_H
+#include "shm_worker_arch.h"
 
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -70,7 +70,7 @@ static void get_shm_name(const char *refname, char *shmname)
 	snprintf(shmname, PATH_MAX, SHM_PATH "%s", basename(refname));
 }
 
-static bool is_present_in_shmfs(const char *refname)
+bool is_present_in_shmfs(const char *refname)
 {
 	char buf[PATH_MAX];
 	get_shm_name(refname, buf);
@@ -81,9 +81,26 @@ static bool is_present_in_shmfs(const char *refname)
 	return rc == 0;
 }
 
-static void copy_shmname(const char *refname, char *shmname)
+void open_for_reading(const char *refname, char *shmname)
 {
 	get_shm_name(refname, shmname);
 }
 
-#endif
+void open_for_writing(const char *refname, char *shmname)
+{
+	get_shm_name(refname, shmname);
+}
+
+bool load_into_shmfs(const char *refname)
+{
+	return copy_into_shm(refname);
+}
+
+void perform_commit(const char *oldname, const char *newname)
+{
+	char oldname_n[PATH_MAX], newname_n[PATH_MAX];
+	get_shm_name(oldname, oldname_n);
+	get_shm_name(newname, newname_n);
+
+	invoke_ln(oldname_n, newname_n);
+}

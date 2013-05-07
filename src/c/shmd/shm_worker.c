@@ -14,14 +14,9 @@
 
 #include "logging.h"
 #include "shm_worker.h"
+#include "shm_worker_arch.h"
 #include "interdaemon.h"
 #include "options.h"
-
-#if defined(BUILD_POSIX_SHMFS)
-	#include "shm_worker_linux.h"
-#elif defined(BUILD_CUSTOM_SHMFS)
-	#error "Implement me"
-#endif
 
 #include <limits.h>
 #include <string.h>
@@ -58,20 +53,21 @@ void *shm_worker(void *work)
 		bool present = is_present_in_shmfs(w->rq.refname);
 
 		if(present) { // already present in shm
-			copy_shmname(w->rq.refname, w->rsp.shmname);
+			open_for_reading(w->rq.refname, w->rsp.shmname);
 			w->rsp.header.type = IPC_RSP_OK;
 			w->stage = STAGE_RSP;
 		} else {
 			struct stat st;
 			int rc = stat(w->rq.refname, &st);
-			if(rc == 0) {
+			if(rc == 0) { // file exists in local blockstore
 				// TODO: check memory availability
 
-				// exists) copy_into_shm
-				if(copy_into_shm(w->rq.refname)) {
+				if(load_into_shmfs(w->rq.refname)) {
 					log_f("ShmWrk", "Loaded %s from local blockstore\n", w->rq.refname);
-					get_shm_name(w->rq.refname, w->rsp.shmname);
 					w->rsp.header.type = IPC_RSP_OK;
+					if(w->recursive) {
+						open_for_reading(w->rq.refname, w->rsp.shmname);
+					}
 				} else {
 					w->rsp.header.type = IPC_RSP_FAIL;
 				}
@@ -100,9 +96,9 @@ void *shm_worker(void *work)
 							read(pipe_fd[0], &rsp, sizeof(rsp));
 
 							log_f("ShmWrk", "got back recursive response for %s\n", w->rq.refname);
-							if(rsp.header.type == IPC_RSP_OK) {
+							if(rsp.header.type == IPC_RSP_OK && w->rsp.header.type == IPC_RSP_FAIL) {
 								w->rsp = rsp;
-								// TODO: on SCC, open the file and adjust filename
+								open_for_reading(w->rq.refname, w->rsp.shmname);
 							}
 
 							++nresponses;
@@ -124,18 +120,12 @@ void *shm_worker(void *work)
 		}
 	} else if(w->rq.header.type == IPC_REQ_WR) {
 		log_f("ShmWrk", "Write requested for %s\n", w->rq.refname);
-		get_shm_name(w->rq.refname, w->rsp.shmname);
+		open_for_writing(w->rq.refname, w->rsp.shmname);
 		w->rsp.header.type = IPC_RSP_OK;
 		w->stage = STAGE_RSP;
 	} else if(w->rq.header.type == IPC_REQ_CI) {
 		log_f("ShmWrk", "Commit requested for %s as %s\n", w->rq.refname, w->rsp.shmname);
-
-		char oldname[PATH_MAX], newname[PATH_MAX];
-		get_shm_name(w->rq.refname, oldname);
-		get_shm_name(w->rsp.shmname, newname);
-
-		invoke_ln(oldname, newname);
-
+		perform_commit(w->rq.refname, w->rsp.shmname);
 		w->rsp.header.type = IPC_RSP_OK;
 		w->stage = STAGE_RSP;
 	}
