@@ -16,7 +16,7 @@
 #include "shm_fs_helpers.h"
 #include "shm_fs_arch.h"
 
-#ifdef BUILD_LINUX
+#ifdef KERN_LINUX
 	#include "shm_fs_linux.h"
 #else
 	#error "Please implement me"

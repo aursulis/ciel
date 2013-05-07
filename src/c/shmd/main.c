@@ -17,6 +17,10 @@
 #include "ipc_server.h"
 #include "interdaemon.h"
 
+#ifdef BUILD_CUSTOM_SHMFS
+	#include "shm_fs.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -74,6 +78,10 @@ int main(int argc, char **argv)
 
 	write_pid(lock_fd); // write PID _after_ having daemonised
 	close(lock_fd);
+
+#ifdef BUILD_CUSTOM_SHMFS
+	shmfs_init(shmdopts.shmd_id);
+#endif
 
 	pthread_t ipc_thread, interdaemon_thread;
 
