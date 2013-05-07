@@ -40,7 +40,7 @@ static int new_fifo_number()
 
 	int result = fifo_counter;
 	pthread_mutex_unlock(&counter_lock);
-	return fifo_counter;
+	return result;
 }
 
 static void set_writer_fifo(int inode_id, int fifo_id)
