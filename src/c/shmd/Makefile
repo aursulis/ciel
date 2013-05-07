@@ -36,6 +36,12 @@ shmd: $(ARCH_OBJECTS) shm_worker.o options.o ipc_server.o logging.o main.o
 test: libshmdc.so test.o
 	$(CC) $(CFLAGS) -o$@ $^ -L./ -lshmdc
 
+.PHONY: install
+install:
+	/usr/bin/install -m 0755 shmd /usr/local/bin/
+	/usr/bin/install -m 0755 libshmdc.so /usr/local/lib/
+	/sbin/ldconfig
+
 .PHONY: clean
 clean:
 	rm -f *.o shmd libshmdc.so test
