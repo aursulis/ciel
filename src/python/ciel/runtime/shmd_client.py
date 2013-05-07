@@ -19,24 +19,24 @@ import ctypes
 _lib = ctypes.cdll.LoadLibrary("libshmdc.so")
 
 def init_lib(bs_path):
-    ciel.log('initialising client library with %s' % bs_path, 'SHMDC', logging.INFO)
+    ciel.log('initialising client library with %s' % bs_path, 'SHMDC', logging.DEBUG)
     _lib.ipc_init_client(bs_path)
 
 def send_load_request(ref_name):
-    ciel.log('sending request to load %s' % ref_name, 'SHMDC', logging.INFO)
+    ciel.log('sending request to load %s' % ref_name, 'SHMDC', logging.DEBUG)
     shm_name = ctypes.create_string_buffer(4096) # XXX: this is actually PATH_MAX; hardcode for now
     return_code = _lib.ipc_send_load_request(ref_name, shm_name)
     ciel.log('got back %d, %s' % (return_code, shm_name.value), 'SHMDC', logging.DEBUG)
     return (return_code, shm_name.value)
 
 def send_write_request(ref_name):
-    ciel.log('sending request to write %s' % ref_name, 'SHMDC', logging.INFO)
+    ciel.log('sending request to write %s' % ref_name, 'SHMDC', logging.DEBUG)
     shm_name = ctypes.create_string_buffer(4096) # XXX: this is actually PATH_MAX; hardcode for now
     return_code = _lib.ipc_send_write_request(ref_name, shm_name)
-    ciel.log('got back %d, %s' % (return_code, shm_name.value), 'SHMDC', logging.INFO)
+    ciel.log('got back %d, %s' % (return_code, shm_name.value), 'SHMDC', logging.DEBUG)
     return (return_code, shm_name.value)
 
 def send_commit_request(old_name, new_name):
-    ciel.log('sending request to commit %s as %s' % (old_name, new_name), 'SHMDC', logging.INFO)
+    ciel.log('sending request to commit %s as %s' % (old_name, new_name), 'SHMDC', logging.DEBUG)
     return_code = _lib.ipc_send_commit_request(old_name, new_name)
     return return_code == 0

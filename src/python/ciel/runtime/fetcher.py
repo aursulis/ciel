@@ -209,7 +209,7 @@ class FetchInProgress:
         self.run_plans()
 
     def resolve_dataval(self):
-        ciel.log('try plan resolve_dataval', 'TRACING', logging.INFO)
+        ciel.log('try plan resolve_dataval', 'TRACING', logging.DEBUG)
         if self.string_callback is not None:
             decoded_dataval = decode_datavalue(self.ref)
             self.string_callback(decoded_dataval)
@@ -219,7 +219,7 @@ class FetchInProgress:
             self.result(True, None)
 
     def use_shared_memory(self):
-        ciel.log('try plan use_shared_memory', 'TRACING', logging.INFO)
+        ciel.log('try plan use_shared_memory', 'TRACING', logging.DEBUG)
         status, filename = shmd_client.send_load_request(filename_for_ref(self.ref))
         if status == 0:
             self.set_filename(filename, True)
@@ -228,7 +228,7 @@ class FetchInProgress:
             raise PlanFailedError("Plan use-shared-memory failed for %s: shmd_client returned %d" % (self.ref, status), "BLOCKSTORE", logging.DEBUG)
 
     def use_local_file(self):
-        ciel.log('try plan use_local_file', 'TRACING', logging.INFO)
+        ciel.log('try plan use_local_file', 'TRACING', logging.DEBUG)
         filename = filename_for_ref(self.ref)
         if os.path.exists(filename):
             self.set_filename(filename, True)
@@ -237,7 +237,7 @@ class FetchInProgress:
             raise PlanFailedError("Plan use-local-file failed for %s: no such file %s" % (self.ref, filename), "BLOCKSTORE", logging.DEBUG)
 
     def attach_local_producer(self):
-        ciel.log('try plan attach_local_producer', 'TRACING', logging.INFO)
+        ciel.log('try plan attach_local_producer', 'TRACING', logging.DEBUG)
         producer = get_producer_for_id(self.ref.id)
         if producer is None:
             raise PlanFailedError("Plan attach-local-producer failed for %s: not being produced here" % self.ref, "BLOCKSTORE", logging.DEBUG)
@@ -252,12 +252,12 @@ class FetchInProgress:
             self.set_filename(filename, is_pipe)
 
     def http_fetch(self):
-        ciel.log('try plan http_fetch', 'TRACING', logging.INFO)
+        ciel.log('try plan http_fetch', 'TRACING', logging.DEBUG)
         self.producer = HttpTransferContext(self.ref, self)
         self.producer.start()
 
     def tcp_fetch(self):
-        ciel.log('try plan tcp_fetch', 'TRACING', logging.INFO)
+        ciel.log('try plan tcp_fetch', 'TRACING', logging.DEBUG)
         if (not self.may_pipe) or (not self.sole_consumer):
             raise PlanFailedError("TCP-Fetch currently only capable of delivering a pipe")
         self.producer = TcpTransferContext(self.ref, self.chunk_size, self)
@@ -348,7 +348,7 @@ def fetch_ref_async(ref, result_callback, reset_callback, start_filename_callbac
                     chunk_size=67108864, may_pipe=False, sole_consumer=False,
                     must_block=False, task_record=None):
 
-    ciel.log('in fetch_ref_async(%s)' % ref, 'TRACING', logging.INFO)
+    ciel.log('in fetch_ref_async(%s)' % ref, 'TRACING', logging.DEBUG)
     if isinstance(ref, SWErrorReference):
         raise ErrorReferenceError(ref)
     if isinstance(ref, SW2_FixedReference):
@@ -359,7 +359,7 @@ def fetch_ref_async(ref, result_callback, reset_callback, start_filename_callbac
                                  string_callback, progress_callback, chunk_size,
                                  may_pipe, sole_consumer, must_block, task_record)
     new_client.start_fetch()
-    ciel.log('leaving fetch_ref_async(%s)' % ref, 'TRACING', logging.INFO)
+    ciel.log('leaving fetch_ref_async(%s)' % ref, 'TRACING', logging.DEBUG)
     return new_client
 
 class SynchronousTransfer:
@@ -439,7 +439,7 @@ class FileOrString:
             
 def sync_retrieve_refs(refs, task_record, accept_string=False):
     
-    ciel.log('in sync_retrieve_refs(%s)' % refs, 'TRACING', logging.INFO)
+    ciel.log('in sync_retrieve_refs(%s)' % refs, 'TRACING', logging.DEBUG)
     ctxs = []
     
     for ref in refs:
@@ -458,12 +458,12 @@ def sync_retrieve_refs(refs, task_record, accept_string=False):
     failed_transfers = filter(lambda x: not x.success, ctxs)
     if len(failed_transfers) > 0:
         raise MissingInputException(dict([(ctx.ref.id, SW2_TombstoneReference(ctx.ref.id, ctx.ref.location_hints)) for ctx in failed_transfers]))
-    ciel.log('leaving sync_retrieve_refs(%s)' % refs, 'TRACING', logging.INFO)
+    ciel.log('leaving sync_retrieve_refs(%s)' % refs, 'TRACING', logging.DEBUG)
     return ctxs
 
 def retrieve_files_or_strings_for_refs(refs, task_record):
     
-    ciel.log('in retrieve_files_or_strings_for_refs', 'TRACING', logging.INFO)
+    ciel.log('in retrieve_files_or_strings_for_refs', 'TRACING', logging.DEBUG)
     ctxs = sync_retrieve_refs(refs, task_record, accept_string=True)
     return [FileOrString(ctx.str, ctx.filename, ctx.completed_ref) for ctx in ctxs]
 
@@ -473,7 +473,7 @@ def retrieve_file_or_string_for_ref(ref, task_record):
 
 def retrieve_filenames_for_refs(refs, task_record, return_ctx=False):
     
-    ciel.log('in retrieve_filenames_for_refs', 'TRACING', logging.INFO)
+    ciel.log('in retrieve_filenames_for_refs', 'TRACING', logging.DEBUG)
     ctxs = sync_retrieve_refs(refs, task_record, accept_string=False)
     if return_ctx:
         return [FileOrString(None, ctx.filename, ctx.completed_ref) for ctx in ctxs]
