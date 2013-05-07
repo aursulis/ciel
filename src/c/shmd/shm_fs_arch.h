@@ -30,4 +30,6 @@ void release_dir_lock();
 void release_inodes_lock();
 void release_fat_lock();
 
+void wait_barrier();
+
 #endif

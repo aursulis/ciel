@@ -63,7 +63,7 @@ void shmfs_init(int id)
 		release_stats_lock();
 	}
 
-	// XXX: BARRIER HERE
+	wait_barrier();
 }
 
 int shmfs_lookup(const char *name)

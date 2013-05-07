@@ -53,7 +53,7 @@ void shmfs_control_init(int id)
 		pthread_mutexattr_destroy(&attr);
 	}
 
-	// XXX: BARRIER HERE
+	wait_barrier();
 	
 	if(id != 0) {
 		fd = shm_open("/shmfs-control", O_RDWR, S_IRUSR | S_IWUSR);
@@ -73,6 +73,8 @@ inline void release_dir_lock() { pthread_mutex_unlock(&c->dir_lock); }
 inline void release_inodes_lock() { pthread_mutex_unlock(&c->inodes_lock); }
 inline void release_fat_lock() { pthread_mutex_unlock(&c->fat_lock); }
 
+inline void wait_barrier() { }
+
 struct shmfs *shmfs_data_init(int id)
 {
 	struct shmfs *result;
@@ -83,7 +85,7 @@ struct shmfs *shmfs_data_init(int id)
 		result = (struct shmfs *)mmap(NULL, sizeof(*result), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	}
 
-	// XXX: BARRIER HERE
+	wait_barrier();
 	
 	if(id != 0) {
 		fd = shm_open("/shmfs-data", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
