@@ -194,9 +194,12 @@ int shmfs_load_local(const char *name)
 	return inode_id;
 }
 
-int shmfs_store_local(int inode_id)
+int shmfs_store_local(int inode_id, const char *name)
 {
-	return 0;
+	FILE *f_dst = fopen(name, "wb");
+	size_t rc = perform_output_loop(f_dst, inode_id);
+	fclose(f_dst);
+	return rc;
 }
 
 int shmfs_deallocate(int inode_id)

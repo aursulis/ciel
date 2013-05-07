@@ -74,7 +74,7 @@ int shmfs_lookup(const char *name);
 int shmfs_create(const char *name, bool openwrite);
 int shmfs_link(const char *target, const char *name);
 int shmfs_load_local(const char *name);
-int shmfs_store_local(int inode_id);
+int shmfs_store_local(int inode_id, const char *name);
 int shmfs_deallocate(int inode_id);
 int shmfs_unlink(const char *name);
 size_t shmfs_getsize(const char *name);

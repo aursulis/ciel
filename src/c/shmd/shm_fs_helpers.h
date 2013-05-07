@@ -25,6 +25,7 @@ extern struct shmfs *fs;
 
 int find_next_free_block(int from);
 size_t perform_input_loop(FILE *f_src, int inode_id, int *blocks_reserved);
+size_t perform_output_loop(FILE *f_dst, int inode_id);
 
 inline int find_next_free_block(int from)
 {
@@ -64,6 +65,23 @@ inline size_t perform_input_loop(FILE *f_src, int inode_id, int *blocks_reserved
 	} while(bytes > 0);
 
 	return total_size;
+}
+
+inline size_t perform_output_loop(FILE *f_dst, int inode_id)
+{
+	int cur_block = fs->inodes[inode_id].first_block;
+	size_t bytes_left = fs->inodes[inode_id].size;
+	size_t bytes_sent = 0;
+
+	do {
+		size_t to_send = bytes_left > SHMFS_BSIZE ? SHMFS_BSIZE : bytes_left;
+		bytes_sent = fwrite(fs->blocks[cur_block].d, sizeof(char),
+				to_send, f_dst);
+		bytes_left -= bytes_sent;
+		cur_block = fs->fat[cur_block];
+	} while(bytes_sent == SHMFS_BSIZE && bytes_left > 0);
+
+	return bytes_left;
 }
 
 #endif
