@@ -59,7 +59,7 @@ class SWStdinoutExecutor(ProcessRunningExecutor):
                     # First argument must be executable.
                     os.chmod(command_line[0], stat.S_IRWXU)
         
-        ciel.log.error("Executing stdinout with: %s" % " ".join(map(str, command_line)), 'EXEC', logging.INFO)
+        ciel.log.error("Executing stdinout with: %s" % " ".join(map(str, command_line)), 'EXEC', logging.DEBUG)
 
         with open(output_files[0], "w") as temp_output_fp:
             # This hopefully avoids the race condition in subprocess.Popen()
