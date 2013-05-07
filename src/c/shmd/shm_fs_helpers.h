@@ -16,9 +16,6 @@
 #define SHM_FS_HELPERS_H
 
 #include "shm_fs.h"
-#include "shm_fs_arch.h"
-
-#include <assert.h>
 #include <stdio.h>
 
 extern struct shmfs *fs;
@@ -26,62 +23,5 @@ extern struct shmfs *fs;
 int find_next_free_block(int from);
 size_t perform_input_loop(FILE *f_src, int inode_id, int *blocks_reserved);
 size_t perform_output_loop(FILE *f_dst, int inode_id);
-
-inline int find_next_free_block(int from)
-{
-	for(int k = 0; k < SHMFS_NBLOCKS; ++k) {
-		if(fs->fat[(from+k) % SHMFS_NBLOCKS] == MAGIC_BLOCK_FREE)
-			return (from+k) % SHMFS_NBLOCKS;
-	}
-	return MAGIC_INVALID_ENTRY;
-}
-
-inline size_t perform_input_loop(FILE *f_src, int inode_id, int *blocks_reserved)
-{
-	int cur_block = fs->inodes[inode_id].first_block;
-	size_t bytes = 0;
-	size_t total_size = 0;
-	*blocks_reserved = 0;
-
-	do {
-		bytes = fread(fs->blocks[cur_block].d, sizeof(char),
-				SHMFS_BSIZE, f_src);
-
-		total_size += bytes;
-		if(bytes == SHMFS_BSIZE) {
-			get_fat_lock();
-			
-			int next_block = find_next_free_block(cur_block);
-			assert(next_block != MAGIC_INVALID_ENTRY);
-			if(next_block != MAGIC_INVALID_ENTRY) {
-				fs->fat[cur_block] = next_block;
-				fs->fat[next_block] = MAGIC_BLOCK_LAST;
-				cur_block = next_block;
-				(*blocks_reserved)++;
-			}
-
-			release_fat_lock();
-		}
-	} while(bytes > 0);
-
-	return total_size;
-}
-
-inline size_t perform_output_loop(FILE *f_dst, int inode_id)
-{
-	int cur_block = fs->inodes[inode_id].first_block;
-	size_t bytes_left = fs->inodes[inode_id].size;
-	size_t bytes_sent = 0;
-
-	do {
-		size_t to_send = bytes_left > SHMFS_BSIZE ? SHMFS_BSIZE : bytes_left;
-		bytes_sent = fwrite(fs->blocks[cur_block].d, sizeof(char),
-				to_send, f_dst);
-		bytes_left -= bytes_sent;
-		cur_block = fs->fat[cur_block];
-	} while(bytes_sent == SHMFS_BSIZE && bytes_left > 0);
-
-	return bytes_left;
-}
 
 #endif
