@@ -152,7 +152,6 @@ class BlockStore:
     def commit_file(self, old_name, new_name):
         if old_name in self.filename_cache:
             ciel.runtime.shmd_client.send_commit_request(old_name, new_name)
-            del self.filename_cache[old_name]
             return
         
         try:
