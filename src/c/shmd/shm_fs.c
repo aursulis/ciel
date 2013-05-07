@@ -141,6 +141,7 @@ int shmfs_create(const char *name, bool openwrite)
 		fs->stats.free_dirents--;
 		fs->stats.free_inodes--;
 		fs->stats.free_blocks--;
+		if(openwrite) fs->stats.nwrites++;
 		release_stats_lock();
 	}
 
@@ -187,6 +188,7 @@ int shmfs_load_local(const char *name)
 	get_stats_lock();
 	get_inodes_lock();
 	fs->stats.free_blocks -= blocks_reserved;
+	fs->stats.nwrites--;
 
 	fs->inodes[inode_id].size = total_size;
 	fs->inodes[inode_id].nopen = 0;
