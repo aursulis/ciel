@@ -77,7 +77,7 @@ class BlockStore:
         singleton_blockstore = self
 
         # (possibly) start up shmd for the blockstore
-        subprocess.call(['/home/uranium/bin/shmd', '-d', '-b', base_dir]) # TODO: replace hardcoded path with proper one later
+        subprocess.call(['/usr/local/bin/shmd', '-d', '-b', base_dir])
 
         # initialise libshmdc
         ciel.runtime.shmd_client.init_lib(base_dir)
