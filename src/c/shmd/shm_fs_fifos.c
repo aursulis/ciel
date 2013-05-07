@@ -119,7 +119,7 @@ static void form_fifo_name(char *dst, int fifo_id)
 
 int shmfs_get_read_filename(const char *name, char *shmname)
 {
-	int inode_id = shmfs_lookup(basename(name));
+	int inode_id = shmfs_lookup(name);
 	if(inode_id == MAGIC_INVALID_ENTRY) {
 		return -1;
 	}
@@ -143,11 +143,11 @@ int shmfs_get_read_filename(const char *name, char *shmname)
 
 int shmfs_get_write_filename(const char *name, char *shmname)
 {
-	int inode_id = shmfs_lookup(basename(name));
+	int inode_id = shmfs_lookup(name);
 	int fifo_id;
 
 	if(inode_id == MAGIC_INVALID_ENTRY) {
-		inode_id = shmfs_create(basename(name), true);
+		inode_id = shmfs_create(name, true);
 		if(inode_id == MAGIC_INVALID_ENTRY) {
 			return -1;
 		}
