@@ -353,6 +353,7 @@ class ProcExecutor(BaseExecutor):
             ciel.log("Not using FDs directly: module 'sendmsg' not available", "EXEC", logging.DEBUG)
             fd_socket_name = None
         output_name = self.expected_outputs[index]
+        ciel.log("open_output called in procexecutor for %s\n\n" % output_name, "EXEC", logging.DEBUG)
         can_accept_fd = (fd_socket_name is not None)
         output_ctx = OngoingOutput(output_name, index, can_smart_subscribe, may_pipe, make_local_sweetheart, can_accept_fd, self)
         self.ongoing_outputs[index] = output_ctx
@@ -364,6 +365,7 @@ class ProcExecutor(BaseExecutor):
         if is_fd:
             return ({"sending_fd": True}, x)
         else:
+            ciel.log("open_output returning %s" % x, "EXEC", logging.DEBUG)
             return ({"sending_fd": False, "filename": x}, None)
 
     def stop_output(self, index):

@@ -26,6 +26,7 @@ def send_load_request(ref_name):
     ciel.log('sending request to load %s' % ref_name, 'SHMDC', logging.INFO)
     shm_name = ctypes.create_string_buffer(4096) # XXX: this is actually PATH_MAX; hardcode for now
     return_code = _lib.ipc_send_load_request(ref_name, shm_name)
+    ciel.log('got back %d, %s' % (return_code, shm_name.value), 'SHMDC', logging.DEBUG)
     return (return_code, shm_name.value)
 
 def send_write_request(ref_name):
