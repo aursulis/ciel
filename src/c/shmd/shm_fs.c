@@ -13,6 +13,7 @@
  */
 
 #include "shm_fs.h"
+#include "shm_fs_helpers.h"
 #include "shm_fs_arch.h"
 
 #ifdef BUILD_LINUX
@@ -26,7 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 
-static struct shmfs *fs = NULL;
+struct shmfs *fs = NULL;
 
 void shmfs_init(int id)
 {
@@ -82,15 +83,6 @@ int shmfs_lookup(const char *name)
 	release_dir_lock();
 
 	return result;
-}
-
-static inline int find_next_free_block(int from)
-{
-	for(int k = 0; k < SHMFS_NBLOCKS; ++k) {
-		if(fs->fat[(from+k) % SHMFS_NBLOCKS] == MAGIC_BLOCK_FREE)
-			return (from+k) % SHMFS_NBLOCKS;
-	}
-	return MAGIC_INVALID_ENTRY;
 }
 
 int shmfs_create(const char *name, bool openwrite)
@@ -183,32 +175,8 @@ int shmfs_load_local(const char *name)
 {
 	FILE *f_src = fopen(name, "rb");
 	int inode_id = shmfs_create(basename(name), true);
-
-	get_fat_lock();
-
-	int cur_block = fs->inodes[inode_id].first_block;
-	size_t bytes = 0;
-	size_t total_size = 0;
 	int blocks_reserved = 0;
-
-	do {
-		bytes = fread(fs->blocks[cur_block].d, sizeof(char),
-				SHMFS_BSIZE, f_src);
-
-		total_size += bytes;
-		if(bytes == SHMFS_BSIZE) {
-			int next_block = find_next_free_block(cur_block);
-			assert(next_block != MAGIC_INVALID_ENTRY);
-			if(next_block != MAGIC_INVALID_ENTRY) {
-				fs->fat[cur_block] = next_block;
-				fs->fat[next_block] = MAGIC_BLOCK_LAST;
-				cur_block = next_block;
-				blocks_reserved++;
-			}
-		}
-	} while(bytes > 0);
-
-	release_fat_lock();
+	size_t total_size = perform_input_loop(f_src, inode_id, &blocks_reserved);
 	fclose(f_src);
 
 	get_stats_lock();
@@ -223,7 +191,7 @@ int shmfs_load_local(const char *name)
 	release_inodes_lock();
 	release_stats_lock();
 
-	return 0;
+	return inode_id;
 }
 
 int shmfs_store_local(int inode_id)
