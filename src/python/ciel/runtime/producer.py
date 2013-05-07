@@ -129,7 +129,8 @@ class FileOutputContext:
                 ciel.runtime.block_store.commit_producer(self.refid)
             if self.file_watch is not None:
                 self.file_watch.cancel()
-            self.current_size = os.stat(producer_filename(self.refid)).st_size
+            #self.current_size = os.stat(producer_filename(self.refid)).st_size
+            self.current_size = 2048 # TODO: HACK
             for subscriber in self.subscriptions:
                 subscriber.progress(self.current_size)
                 subscriber.result(True)
