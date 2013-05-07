@@ -21,7 +21,10 @@
 	#error "Please implement me"
 #endif
 
+#include <assert.h>
+#include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
 static struct shmfs *fs = NULL;
 
@@ -81,9 +84,67 @@ int shmfs_lookup(const char *name)
 	return result;
 }
 
-int shmfs_create(const char *name)
+static inline int find_next_free_block(int from)
 {
-	return 0;
+	for(int k = 0; k < SHMFS_NBLOCKS; ++k) {
+		if(fs->fat[(from+k) % SHMFS_NBLOCKS] == MAGIC_BLOCK_FREE)
+			return (from+k) % SHMFS_NBLOCKS;
+	}
+	return MAGIC_INVALID_ENTRY;
+}
+
+int shmfs_create(const char *name, bool openwrite)
+{
+	int rc = MAGIC_INVALID_ENTRY;
+	
+	get_dir_lock();
+
+	for(int i = 0; i < SHMFS_NFILES; ++i) {
+		if(fs->files[i].inode_id == MAGIC_INVALID_ENTRY) {
+			get_inodes_lock();
+
+			for(int j = 0; j < SHMFS_NINODES; ++j) {
+				if(fs->inodes[j].flags.valid == 0) {
+					get_fat_lock();
+
+					int k = find_next_free_block(0);
+					if(k != MAGIC_INVALID_ENTRY) {
+						fs->fat[k] = MAGIC_BLOCK_LAST;
+
+						fs->inodes[j].nlinks = 1;
+						fs->inodes[j].nopen = openwrite;
+						fs->inodes[j].flags.valid = 1;
+						fs->inodes[j].flags.openwrite = openwrite;
+						fs->inodes[j].flags.committed = 0;
+						fs->inodes[j].first_block = k;
+						fs->inodes[j].size = 0;
+
+						rc = j;
+						fs->files[i].inode_id = j;
+						strncpy(fs->files[i].name, name, sizeof(fs->files[i].name));
+					}
+
+					release_fat_lock();
+					break;
+				}
+			}
+
+			release_inodes_lock();
+			break;
+		}
+	}
+
+	release_dir_lock();
+
+	if(rc != MAGIC_INVALID_ENTRY) {
+		get_stats_lock();
+		fs->stats.free_dirents--;
+		fs->stats.free_inodes--;
+		fs->stats.free_blocks--;
+		release_stats_lock();
+	}
+
+	return rc;
 }
 
 int shmfs_link(const char *target, const char *name)
@@ -93,6 +154,47 @@ int shmfs_link(const char *target, const char *name)
 
 int shmfs_load_local(const char *name)
 {
+	FILE *f_src = fopen(name, "rb");
+	int inode_id = shmfs_create(basename(name), true);
+
+	get_fat_lock();
+
+	int cur_block = fs->inodes[inode_id].first_block;
+	size_t bytes = 0;
+	size_t total_size = 0;
+	int blocks_reserved = 0;
+
+	do {
+		bytes = fread(fs->blocks[cur_block].d, sizeof(char),
+				SHMFS_BSIZE, f_src);
+
+		total_size += bytes;
+		if(bytes == SHMFS_BSIZE) {
+			int next_block = find_next_free_block(cur_block);
+			assert(next_block != MAGIC_INVALID_ENTRY);
+			if(next_block != MAGIC_INVALID_ENTRY) {
+				fs->fat[cur_block] = next_block;
+				fs->fat[next_block] = MAGIC_BLOCK_LAST;
+				cur_block = next_block;
+				blocks_reserved++;
+			}
+		}
+	} while(bytes > 0);
+
+	release_fat_lock();
+	fclose(f_src);
+
+	get_stats_lock();
+	get_inodes_lock();
+	fs->stats.free_blocks -= blocks_reserved;
+
+	fs->inodes[inode_id].size = total_size;
+	fs->inodes[inode_id].nopen = 0;
+	fs->inodes[inode_id].flags.openwrite = 0;
+	fs->inodes[inode_id].flags.committed = 1;
+	release_inodes_lock();
+	release_stats_lock();
+
 	return 0;
 }
 
