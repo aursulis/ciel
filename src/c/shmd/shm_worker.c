@@ -17,6 +17,12 @@
 #include "interdaemon.h"
 #include "options.h"
 
+#if defined(BUILD_POSIX_SHMFS)
+	#include "shm_worker_linux.h"
+#elif defined(BUILD_CUSTOM_SHMFS)
+	#error "Implement me"
+#endif
+
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,57 +32,9 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
-#define SHM_PATH "/dev/shm/"
 #define BS_SUFFIX "/data/"
-
-/* POSIX shared memory is not required to be implemented as a regular filesystem,
- * however Linux does this, providing with a very convenient way to load files
- * into shared memory
- */
-static bool copy_into_shm(char *src_name)
-{
-	pid_t child = fork();
-	if(child == -1) {
-		perror("fork");
-		return false;
-	}
-
-	if(child == 0) {
-		execl("/bin/cp", "/bin/cp", src_name, SHM_PATH, (char *)NULL);
-		return false;
-	} else {
-		int status = 0;
-		waitpid(child, &status, 0);
-		return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-	}
-}
-
-static bool invoke_ln(char *src_name, char *dst_name)
-{
-	pid_t child = fork();
-	if(child == -1) {
-		perror("fork");
-		return false;
-	}
-
-	if(child == 0) {
-		execl("/bin/ln", "/bin/ln", src_name, dst_name, (char *)NULL);
-		return false;
-	} else {
-		int status = 0;
-		waitpid(child, &status, 0);
-		return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-	}
-}
-
-static void get_shm_name(const char *refname, char *shmname)
-{
-	snprintf(shmname, PATH_MAX, SHM_PATH "%s", basename(refname));
-}
 
 static void normalise_refname(char *refname)
 {
@@ -97,18 +55,15 @@ void *shm_worker(void *work)
 	if(w->rq.header.type == IPC_REQ_LD) {
 		log_f("ShmWrk", "Load requested for %s\n", w->rq.refname);
 
-		char buf[PATH_MAX];
-		get_shm_name(w->rq.refname, buf);
+		bool present = is_present_in_shmfs(w->rq.refname);
 
-		struct stat st;
-		int rc = stat(buf, &st);
-
-		if(rc == 0) { // already present in shm
-			strncpy(w->rsp.shmname, buf, sizeof(w->rsp.shmname));
+		if(present) { // already present in shm
+			copy_shmname(w->rq.refname, w->rsp.shmname);
 			w->rsp.header.type = IPC_RSP_OK;
 			w->stage = STAGE_RSP;
 		} else {
-			rc = stat(w->rq.refname, &st);
+			struct stat st;
+			int rc = stat(w->rq.refname, &st);
 			if(rc == 0) {
 				// TODO: check memory availability
 

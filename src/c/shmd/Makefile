@@ -1,4 +1,4 @@
-CFLAGS = -Wall -g -std=c99 -D_GNU_SOURCE -pthread
+CFLAGS = -Wall -g -std=c99 -D_GNU_SOURCE -DBUILD_POSIX_SHMFS -pthread
 
 all: libshmdc.so shmd test
 
