@@ -73,6 +73,7 @@ void shmfs_init(int id);
 int shmfs_lookup(const char *name);
 int shmfs_create(const char *name, bool openwrite);
 int shmfs_link(const char *target, const char *name);
+int shmfs_commit(const char *oldname, const char *newname);
 int shmfs_load_local(const char *name);
 int shmfs_store_local(int inode_id, const char *name);
 int shmfs_deallocate(int inode_id);

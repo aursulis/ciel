@@ -145,11 +145,10 @@ int shmfs_create(const char *name, bool openwrite)
 
 int shmfs_link(const char *target, const char *name)
 {
-	int rc = -1;
-
 	int inode_id = shmfs_lookup(basename(target));
 	assert(inode_id != MAGIC_INVALID_ENTRY);
 
+	bool success = false;
 	get_dir_lock();
 	for(int i = 0; i < SHMFS_NFILES; ++i) {
 		if(fs->files[i].inode_id == MAGIC_INVALID_ENTRY) {
@@ -160,18 +159,31 @@ int shmfs_link(const char *target, const char *name)
 			fs->inodes[inode_id].nlinks++;
 			release_inodes_lock();
 
-			rc = 0;
+			success = true;
 			break;
 		}
 	}
 	release_dir_lock();
 
-	if(rc == 0) {
+	if(success) {
 		get_stats_lock();
 		fs->stats.free_dirents--;
 		release_stats_lock();
 	}
-	return rc;
+
+	return success ? inode_id : MAGIC_INVALID_ENTRY;
+}
+
+int shmfs_commit(const char *oldname, const char *newname)
+{
+	int inode_id = shmfs_link(oldname, newname);
+	if(inode_id != MAGIC_INVALID_ENTRY) {
+		get_inodes_lock();
+		fs->inodes[inode_id].flags.committed = 1;
+		release_inodes_lock();
+		return 0;
+	}
+	return -1;
 }
 
 int shmfs_load_local(const char *name)
