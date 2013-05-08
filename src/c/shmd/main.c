@@ -21,6 +21,11 @@
 	#include "shm_fs.h"
 #endif
 
+#ifdef KERN_SCC
+	#include "RCCE.h"
+#endif
+
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -61,7 +66,15 @@ static void write_pid(int fd)
 
 int main(int argc, char **argv)
 {
+#if defined(KERN_LINUX)
 	parse_options(argc, argv, &shmdopts);
+#elif defined(KERN_SCC)
+	RCCE_init(&argc, &argv);
+	shmdopts.daemonise = true;
+	shmdopts.shmd_id = RCCE_ue();
+	shmdopts.nshmds = RCCE_num_ues();
+	snprintf(shmdopts.bs_path, sizeof(shmdopts.bs_path), "/shared/bs-%d/", shmdopts.shmd_id);
+#endif
 
 	chdir(shmdopts.bs_path);
 	int lock_fd = get_lock_file();
@@ -92,5 +105,10 @@ int main(int argc, char **argv)
 	pthread_join(interdaemon_thread, NULL);
 
 	unlink(LOCK_FILE);
+
+#if defined(KERN_SCC)
+	RCCE_finalize();
+#endif
+
 	return EXIT_SUCCESS;
 }
