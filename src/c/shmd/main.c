@@ -15,7 +15,7 @@
 #include "logging.h"
 #include "options.h"
 #include "ipc_server.h"
-#include "interdaemon.h"
+#include "interdaemon_arch.h"
 
 #ifdef BUILD_CUSTOM_SHMFS
 	#include "shm_fs.h"

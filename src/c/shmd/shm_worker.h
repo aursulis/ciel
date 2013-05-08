@@ -31,6 +31,7 @@ struct shm_worker_w
 	int replyfd;
 	struct sockaddr_un replyaddr;
 	socklen_t replylen;
+	int replyshmd;
 	bool recursive;
 	enum shm_worker_stage_t stage;
 };

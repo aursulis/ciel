@@ -13,6 +13,7 @@
  */
 
 #include "logging.h"
+#include "options.h"
 #include "ipc_server.h"
 #include "ipc_defs.h"
 #include "shm_worker.h"
@@ -107,6 +108,7 @@ void *ipc_server_main(void *ignored)
 			w->replyaddr = srcaddr;
 			w->replylen = srclen;
 			w->replyfd = pipe_fd[1];
+			w->replyshmd = shmdopts.shmd_id;
 			w->recursive = true;
 			w->stage = STAGE_RQ;
 

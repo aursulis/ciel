@@ -12,15 +12,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef INTERDAEMON_H
-#define INTERDAEMON_H
+#ifndef INTERDAEMON_ARCH_H
+#define INTERDAEMON_ARCH_H
 
-#include <sys/socket.h>
-#include <sys/un.h>
-
-int interdaemon_get_read_pipe();
-int interdaemon_get_write_pipe();
-int interdaemon_create_pipe();
-void interdaemon_handle_external(char *buf, struct sockaddr_un *srcaddr, socklen_t srclen, int from_shmd);
+void *interdaemon_server_main(void *ignored);
 
 #endif
+

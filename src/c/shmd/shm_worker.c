@@ -88,7 +88,7 @@ void *shm_worker(void *work)
 						w->rsp.header.type = IPC_RSP_FAIL; // fail by default unless some recursive request succeeds
 
 						log_f("ShmWrk", "making recursive call for %s\n", w->rq.refname);
-						write(interdaemon_get_pipe(), &w, sizeof(w));
+						write(interdaemon_get_write_pipe(), &w, sizeof(w));
 
 						int nresponses = 0;
 						while(nresponses < shmdopts.nshmds-1) {

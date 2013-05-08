@@ -14,6 +14,8 @@
 
 #include "logging.h"
 #include "options.h"
+#include "interdaemon.h"
+#include "interdaemon_arch.h"
 #include "ipc_defs.h"
 #include "shm_worker.h"
 
@@ -31,21 +33,12 @@
 #define SOCKET_TEMPLATE "/tmp/intershmd/shmd-"
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 
-static int pipe_fd[2];
-
-int interdaemon_get_pipe()
-{
-	return pipe_fd[1];
-}
-
 void *interdaemon_server_main(void *ignored)
 {
 	log_f("IdSrv", "Interdaemon server thread started\n");
 
-	if(pipe(pipe_fd) == -1) {
-		perror("pipe");
-		pthread_exit(NULL);
-	}
+	if(interdaemon_create_pipe() == -1) pthread_exit(NULL);
+	int pipe_fd = interdaemon_get_read_pipe();
 
 	int sock_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 	if(sock_fd == -1) {
@@ -68,9 +61,9 @@ void *interdaemon_server_main(void *ignored)
 
 	fd_set reference_set;
 	FD_ZERO(&reference_set);
-	FD_SET(pipe_fd[0], &reference_set);
+	FD_SET(pipe_fd, &reference_set);
 	FD_SET(sock_fd, &reference_set);
-	int nfds = MAX(pipe_fd[0], sock_fd) + 1;
+	int nfds = MAX(pipe_fd, sock_fd) + 1;
 
 	fd_set work_set;
 	while(1) {
@@ -88,34 +81,12 @@ void *interdaemon_server_main(void *ignored)
 			ssize_t bytes = recvfrom(sock_fd, buf, sizeof(buf), 0,
 					(struct sockaddr *)&srcaddr, &srclen);
 
-			struct ipc_header *h = (struct ipc_header *)buf;
-			if(h->type == IPC_REQ_LD) {
-				struct ipc_request *rq = (struct ipc_request *)buf;
-				log_f("IdSrv", "received external request to load %s\n", rq->refname);
-
-				struct shm_worker_w *w = (struct shm_worker_w *)malloc(sizeof(struct shm_worker_w));
-				w->rq = *rq;
-				w->rsp.header.replyfd = w->rq.header.replyfd;
-				w->rsp.header.len = sizeof(w->rsp);
-				w->replyaddr = srcaddr;
-				w->replylen = srclen;
-				w->replyfd = pipe_fd[1];
-				w->recursive = false;
-				w->stage = STAGE_RQ;
-
-				pthread_t worker_thread;
-				pthread_create(&worker_thread, NULL, shm_worker, (void *)w);
-			} else if(h->type == IPC_RSP_OK || h->type == IPC_RSP_FAIL) {
-				struct ipc_response *rsp = (struct ipc_response *)buf;
-				log_f("IdSrv", "received external response\n");
-
-				write(rsp->header.replyfd, rsp, sizeof(*rsp));
-			}
+			interdaemon_handle_external(buf, &srcaddr, srclen, -1); // don't use from_shmd
 		}
 
-		if(FD_ISSET(pipe_fd[0], &work_set)) {
+		if(FD_ISSET(pipe_fd, &work_set)) {
 			struct shm_worker_w *w = NULL;
-			ssize_t bytes = read(pipe_fd[0], &w, sizeof(w));
+			ssize_t bytes = read(pipe_fd, &w, sizeof(w));
 
 			if(w->stage == STAGE_RECURSIVE_RQ) {
 				log_f("IdSrv", "received recursive request from shm_worker for %s\n", w->rq.refname);

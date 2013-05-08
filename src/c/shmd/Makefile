@@ -30,7 +30,7 @@ all: libshmdc.so shmd test
 libshmdc.so: ipc_integ.c
 	$(CC) $(CFLAGS) -fPIC -shared -Wl,-soname,$@ -o$@ $^ -lrt
 
-shmd: $(ARCH_OBJECTS) shm_worker.o options.o ipc_server.o logging.o main.o
+shmd: $(ARCH_OBJECTS) interdaemon.o shm_worker.o options.o ipc_server.o logging.o main.o
 	$(CC) $(CFLAGS) -o$@ $^ -lrt
 
 test: libshmdc.so test.o
