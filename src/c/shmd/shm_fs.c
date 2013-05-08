@@ -16,10 +16,12 @@
 #include "shm_fs_helpers.h"
 #include "shm_fs_arch.h"
 
-#ifdef KERN_LINUX
+#if defined(KERN_LINUX)
 	#include "shm_fs_linux.h"
+#elif defined(KERN_SCC)
+	#include "shm_fs_scc.h"
 #else
-	#error "Please implement me"
+	#error "Please specify which kernel you are building for"
 #endif
 
 #include <assert.h>
