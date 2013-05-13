@@ -12,7 +12,7 @@ ifneq (,$(findstring $(ARCH_LINUX), $(MODE)))
 endif
 
 ifneq (,$(findstring $(ARCH_SCC), $(MODE)))
-	#ARCH_OBJECTS += interdaemon_scc.o
+	ARCH_OBJECTS += interdaemon_scc.o
 endif
 
 ifneq (,$(findstring $(SHMFS_POSIX), $(MODE)))
