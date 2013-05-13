@@ -147,7 +147,7 @@ int shmfs_create(const char *name, bool openwrite)
 
 int shmfs_link(const char *target, const char *name)
 {
-	int inode_id = shmfs_lookup(basename(target));
+	int inode_id = shmfs_lookup(target);
 	assert(inode_id != MAGIC_INVALID_ENTRY);
 
 	bool success = false;
@@ -155,7 +155,7 @@ int shmfs_link(const char *target, const char *name)
 	for(int i = 0; i < SHMFS_NFILES; ++i) {
 		if(fs->files[i].inode_id == MAGIC_INVALID_ENTRY) {
 			fs->files[i].inode_id = inode_id;
-			strncpy(fs->files[i].name, basename(name), sizeof(fs->files[i].name));
+			strncpy(fs->files[i].name, name, sizeof(fs->files[i].name));
 
 			get_inodes_lock();
 			fs->inodes[inode_id].nlinks++;
