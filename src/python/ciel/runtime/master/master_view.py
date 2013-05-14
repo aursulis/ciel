@@ -53,7 +53,8 @@ class HostnameRoot:
 
     @cherrypy.expose
     def index(self):
-        (name, _, _) = socket.gethostbyaddr(cherrypy.request.remote.ip)
+        #(name, _, _) = socket.gethostbyaddr(cherrypy.request.remote.ip)
+        name = socket.gethostbyname(cherrypy.request.remote.ip)
         return simplejson.dumps(name)
 
 class ShutdownRoot:

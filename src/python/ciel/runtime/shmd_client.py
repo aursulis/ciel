@@ -23,6 +23,7 @@ def init_lib(bs_path):
     _lib.ipc_init_client(bs_path)
 
 def send_load_request(ref_name):
+    ref_name = ref_name.encode('ascii', 'ignore')
     ciel.log('sending request to load %s' % ref_name, 'SHMDC', logging.DEBUG)
     shm_name = ctypes.create_string_buffer(4096) # XXX: this is actually PATH_MAX; hardcode for now
     return_code = _lib.ipc_send_load_request(ref_name, shm_name)
@@ -30,6 +31,7 @@ def send_load_request(ref_name):
     return (return_code, shm_name.value)
 
 def send_write_request(ref_name):
+    ref_name = ref_name.encode('ascii', 'ignore')
     ciel.log('sending request to write %s' % ref_name, 'SHMDC', logging.DEBUG)
     shm_name = ctypes.create_string_buffer(4096) # XXX: this is actually PATH_MAX; hardcode for now
     return_code = _lib.ipc_send_write_request(ref_name, shm_name)
@@ -37,6 +39,8 @@ def send_write_request(ref_name):
     return (return_code, shm_name.value)
 
 def send_commit_request(old_name, new_name):
+    old_name = old_name.encode('ascii', 'ignore')
+    new_name = new_name.encode('ascii', 'ignore')
     ciel.log('sending request to commit %s as %s' % (old_name, new_name), 'SHMDC', logging.DEBUG)
     return_code = _lib.ipc_send_commit_request(old_name, new_name)
     return return_code == 0
