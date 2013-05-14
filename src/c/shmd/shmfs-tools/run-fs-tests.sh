@@ -49,13 +49,33 @@ test_big_fill() {
 	fi
 }
 
+test_linking() {
+	make_test_file $TESTDIR/original 1024
+	./shmld $TESTDIR/original
+	./shmln original alias1
+	./shmln original alias2
+	./shmln alias1 alias3
+
+	((failed = 0))
+
+	for ((i = 1; i <= 3; i++))
+	do
+		./shmst alias$i $TESTDIR/alias$i
+		if ! diff -q $TESTDIR/original $TESTDIR/alias$i; then
+			((failed++))
+		fi
+	done
+
+	return $failed
+}
+
 run_test() {
 	reinit_fs
 	rm -f $TESTDIR/*
 	$1
 }
 
-TESTS="test_seq_fill test_big_fill"
+TESTS="test_linking test_seq_fill test_big_fill"
 
 echo "Running shmfs unit tests"
 for t in $TESTS
