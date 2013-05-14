@@ -24,11 +24,17 @@
 	#error "Please specify which kernel you are building for"
 #endif
 
+#ifndef SHMFS_STANDALONE
+	#include "logging.h"
+#endif
+
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define SCHED_MAX_WRITES 2
 
@@ -38,8 +44,12 @@ void shmfs_init(int id)
 {
 	shmfs_control_init(id);
 	fs = shmfs_data_init(id);
+	mkdir("/tmp/shmfs-fifos/", 00755);
 
 	if(id == 0) {
+		#ifndef SHMFS_STANDALONE
+		log_f("ShmFS", "I am the master: initialising shmfs\n");
+		#endif
 		get_stats_lock();
 		get_dir_lock();
 		get_inodes_lock();

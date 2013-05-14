@@ -34,10 +34,11 @@ inline void release_fat_lock() { RCCE_release_lock(3); }
 
 inline void wait_barrier() { RCCE_barrier(&RCCE_COMM_WORLD); }
 
+#define SHMOFFSET (256*1024*1024)
 struct shmfs *shmfs_data_init(int id)
 {
 	struct shmfs *result;
-	result = (struct shmfs *)RCCE_shmalloc(sizeof(*result));
+	result = (struct shmfs *)(RCCE_shmalloc(sizeof(*result)) + SHMOFFSET);
 	return result;
 }
 

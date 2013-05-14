@@ -23,6 +23,7 @@
 
 #ifdef KERN_SCC
 	#include "RCCE.h"
+	#include "iRCCE.h"
 #endif
 
 #include <stdbool.h>
@@ -70,10 +71,11 @@ int main(int argc, char **argv)
 	parse_options(argc, argv, &shmdopts);
 #elif defined(KERN_SCC)
 	RCCE_init(&argc, &argv);
+	iRCCE_init();
 	shmdopts.daemonise = true;
 	shmdopts.shmd_id = RCCE_ue();
 	shmdopts.nshmds = RCCE_num_ues();
-	snprintf(shmdopts.bs_path, sizeof(shmdopts.bs_path), "/shared/bs-%d/", shmdopts.shmd_id);
+	snprintf(shmdopts.bs_path, sizeof(shmdopts.bs_path), "/shared/au231/bs/%d/", shmdopts.shmd_id);
 #endif
 
 	chdir(shmdopts.bs_path);

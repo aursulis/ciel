@@ -28,6 +28,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -76,14 +78,14 @@ void *interdaemon_server_main(void *ignored)
 						if(i == shmdopts.shmd_id) continue;
 
 						log_f("IdSrv", "sending recursive request to %d\n", i);
-						iRCCE_isend(&w->rq, sizeof(w->rq), i, &s_rq_bcast[i]);
+						iRCCE_isend((char *)&w->rq, sizeof(w->rq), i, &s_rq_bcast[i]);
 					}
 
 					bcast_pending = true;
 				} else if(w->stage == STAGE_RSP) {
 					log_f("IdSrv", "received response from shm_worker\n");
 
-					iRCCE_isend(&w->rsp, sizeof(w->rsp), w->replyshmd, &s_rq_reply);
+					iRCCE_isend((char *)&w->rsp, sizeof(w->rsp), w->replyshmd, &s_rq_reply);
 
 					reply_pending = true;
 				}
