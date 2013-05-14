@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -200,10 +201,14 @@ int shmfs_commit(const char *oldname, const char *newname)
 
 int shmfs_load_local(const char *name)
 {
+	struct timespec tv;
+	tv.tv_sec = 0;
+	tv.tv_nsec = 100000000; // 1/10th second
+
 	get_stats_lock();
 	while(fs->stats.nwrites > SCHED_MAX_WRITES) {
 		release_stats_lock();
-		sleep(1);
+		nanosleep(&tv, NULL);
 		get_stats_lock();
 	}
 	release_stats_lock();
