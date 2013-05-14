@@ -3,7 +3,7 @@ SHMFS_CUSTOM = -DBUILD_CUSTOM_SHMFS
 MODE = $(ARCH_LINUX) $(SHMFS_CUSTOM)
 
 SHMFS_OBJECTS = ../shm_fs.o ../shm_fs_helpers.o
-CFLAGS = -Wall -std=c99 -pthread -D_GNU_SOURCE $(MODE)
+CFLAGS = -Wall -std=c99 -pthread -D_GNU_SOURCE -DSHMFS_STANDALONE $(MODE)
 
 all: shmls shmld shmst shminit
 
