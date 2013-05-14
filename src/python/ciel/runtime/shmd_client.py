@@ -19,6 +19,7 @@ import ctypes
 _lib = ctypes.cdll.LoadLibrary("libshmdc.so")
 
 def init_lib(bs_path):
+    bs_path = bs_path.encode('ascii', 'ignore')
     ciel.log('initialising client library with %s' % bs_path, 'SHMDC', logging.DEBUG)
     _lib.ipc_init_client(bs_path)
 
