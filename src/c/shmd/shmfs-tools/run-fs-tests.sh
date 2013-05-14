@@ -17,6 +17,35 @@ make_test_file() {
 	head -c$2 /dev/urandom > $1
 }
 
+get_random_number() {
+	N=$(od -vAn -N4 -tu4 < /dev/urandom)
+	(( N = $N % ($2 - $1) + $1 ))
+	echo $N
+}
+
+test_random_sizes() {
+	(( maxsize = $BSIZE * 4 - 1 ))
+
+	for ((i = 0; i < NBLOCKS/4; i++))
+	do
+		make_test_file $TESTDIR/test-$i $(get_random_number 1 $maxsize)
+		./shmld $TESTDIR/test-$i
+	done
+
+	((failed = 0))
+
+	for ((i = 0; i < NBLOCKS/4; i++))
+	do
+		rm -f $TESTDIR/output
+		./shmst test-$i $TESTDIR/output
+		if ! diff -q $TESTDIR/test-$i $TESTDIR/output; then
+			((failed++))
+		fi
+	done
+
+	return $failed
+}
+
 test_seq_fill() {
 	for ((i = 0; i < NBLOCKS; i++))
 	do
@@ -75,7 +104,7 @@ run_test() {
 	$1
 }
 
-TESTS="test_linking test_seq_fill test_big_fill"
+TESTS="test_random_sizes test_linking test_seq_fill test_big_fill"
 
 echo "Running shmfs unit tests"
 for t in $TESTS
