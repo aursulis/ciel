@@ -3,7 +3,7 @@ ARCH_SCC = -DKERN_SCC
 SHMFS_POSIX = -DBUILD_POSIX_SHMFS
 SHMFS_CUSTOM = -DBUILD_CUSTOM_SHMFS
 
-MODE = $(ARCH_SCC) $(SHMFS_CUSTOM)
+MODE = $(ARCH_LINUX) $(SHMFS_CUSTOM)
 
 SHMFS_OBJECTS = shm_fs.o shm_fs_helpers.o shm_fs_fifos.o
 ARCH_OBJECTS =
@@ -26,7 +26,7 @@ ifneq (,$(findstring $(SHMFS_CUSTOM), $(MODE)))
 	ARCH_OBJECTS += $(SHMFS_OBJECTS) shm_worker_custom.o
 endif
 
-CFLAGS = -std=c99 -pthread -D_GNU_SOURCE $(MODE)
+CFLAGS = -O2 -std=c99 -pthread -D_GNU_SOURCE $(MODE)
 
 all: libshmdc.so shmd
 

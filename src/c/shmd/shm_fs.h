@@ -19,10 +19,10 @@
 #include <limits.h>
 #include <sys/types.h>
 
-#define SHMFS_NFILES   128   // number of directory entries
-#define SHMFS_NINODES  128   // number of inodes
+#define SHMFS_NFILES   4096   // number of directory entries
+#define SHMFS_NINODES  4096   // number of inodes
 #define SHMFS_BSIZE    (1024*1024)   // block size: 1 MB
-#define SHMFS_NBLOCKS  256   // number of blocks
+#define SHMFS_NBLOCKS  12288   // number of blocks
 
 #define MAGIC_BLOCK_FREE (-1) // block is free
 #define MAGIC_BLOCK_LAST (-2) // block contains EOF
