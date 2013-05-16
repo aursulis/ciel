@@ -77,7 +77,6 @@ void *shmfs_fifo_input(void *args)
 	get_stats_lock();
 	get_inodes_lock();
 	fs->stats.free_blocks -= blocks_reserved;
-	fs->stats.nwrites--;
 
 	fs->inodes[inode_id].size = total_size;
 	fs->inodes[inode_id].nopen = 0;
