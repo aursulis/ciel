@@ -16,7 +16,7 @@ import threading
 import ciel
 import os
 from ciel.public.references import SW2_ConcreteReference, SW2_SweetheartReference,\
-    SW2_FixedReference, SW2_FutureReference, SWErrorReference
+    SW2_FixedReference, SW2_FutureReference, SWErrorReference, SWRealReference
 import pickle
 from ciel.runtime.executors.base import BaseExecutor
 from ciel.runtime.producer import write_fixed_ref_string, ref_from_string,\

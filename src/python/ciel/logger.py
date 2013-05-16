@@ -22,7 +22,7 @@ class CielLogger:
     def __init__(self, logger_root='ciel'):
         self.logger_root = logger_root
         self.log = logging.getLogger(self.logger_root)
-        self.log.setLevel(logging.ERROR)
+        self.log.setLevel(logging.DEBUG)
     
         log_handler = logging.StreamHandler(sys.stderr)
         self.log.addHandler(log_handler)

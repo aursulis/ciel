@@ -17,17 +17,21 @@ import ciel.runtime.stopwatch
 
 CIEL_VERSION_STRING = 'Ciel version 0.1'
 
-try:
-    import cherrypy
-    log = cherrypy.log
-    _handler = logging.StreamHandler()
-    log.error_log.addHandler(_handler)
+#try:
+#    import cherrypy
+#    log = cherrypy.log
+#    _handler = logging.StreamHandler()
+#    log.error_log.addHandler(_handler)
     #_logger = log._get_builtin_handler(cherrypy.log.error_log, "screen")
-    _handler.setLevel(logging.INFO)
-except ImportError:
+#    _handler.setLevel(logging.DEBUG)
+#except ImportError:
+try:
     log = CielLogger()
-    _logger = log
-    
+    _handler = log
+except:
+  print "Failed to import logger module"
+  sys.exit(1)
+
 try:
     import cherrypy
     engine = cherrypy.engine

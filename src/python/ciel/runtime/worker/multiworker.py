@@ -354,6 +354,8 @@ class WorkerThreadPool:
         self.num_threads = num_threads
         self.is_running = False
         self.threads = []
+
+        queue_manager.start()
         
     def subscribe(self):
         self.bus.subscribe('start', self.start)
