@@ -13,6 +13,7 @@
  */
 
 #include "shm_fs.h"
+#include <stdlib.h>
 
 #ifndef KERN_LINUX
 	#error "Available only on normal Linux"
@@ -21,6 +22,10 @@
 int main(int argc, char **argv)
 {
 	shmfs_init(1);
+	if(argc > 2) {
+		int maxwr = atoi(argv[2]);
+		shmfs_set_sched(maxwr);
+	}
 	shmfs_load_local(argv[1]);
 	return 0;
 }

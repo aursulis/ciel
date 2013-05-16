@@ -37,7 +37,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#define SCHED_MAX_WRITES 2
+static int SCHED_MAX_WRITES = 2;
+void shmfs_set_sched(int maxwrites)
+{
+	SCHED_MAX_WRITES = maxwrites;
+}
 
 struct shmfs *fs = NULL;
 
@@ -149,7 +153,6 @@ int shmfs_create(const char *name, bool openwrite)
 		fs->stats.free_dirents--;
 		fs->stats.free_inodes--;
 		fs->stats.free_blocks--;
-		if(openwrite) fs->stats.nwrites++;
 		release_stats_lock();
 	}
 
@@ -206,11 +209,12 @@ int shmfs_load_local(const char *name)
 	tv.tv_nsec = 100000000; // 1/10th second
 
 	get_stats_lock();
-	while(fs->stats.nwrites > SCHED_MAX_WRITES) {
+	while(fs->stats.nwrites >= SCHED_MAX_WRITES) {
 		release_stats_lock();
 		nanosleep(&tv, NULL);
 		get_stats_lock();
 	}
+	fs->stats.nwrites++;
 	release_stats_lock();
 
 	FILE *f_src = fopen(name, "rb");

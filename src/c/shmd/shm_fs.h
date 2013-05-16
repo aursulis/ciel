@@ -69,6 +69,7 @@ struct shmfs
 	struct block blocks[SHMFS_NBLOCKS]; // direct access to data
 };
 
+void shmfs_set_sched(int maxwrites);
 void shmfs_init(int id);
 int shmfs_lookup(const char *name);
 int shmfs_create(const char *name, bool openwrite);
