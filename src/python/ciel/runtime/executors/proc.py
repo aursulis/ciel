@@ -144,11 +144,15 @@ class ProcExecutor(BaseExecutor):
                         command = [task_private["command"]]
                 else:
                     command = self.get_command()
-                command.extend(["--write-fifo", self.process_record.get_read_fifo_name(), 
-                                "--read-fifo", self.process_record.get_write_fifo_name()])
+                if task_private["proc_pargs"]:
+                  command.extend(task_private["proc_pargs"])
+                else:
+                  command.extend(["--write-fifo", self.process_record.get_read_fifo_name(), 
+                                  "--read-fifo", self.process_record.get_write_fifo_name()])
                 new_proc_env = os.environ.copy()
                 new_proc_env.update(self.get_env())
 
+                ciel.log('Starting task command %s' % command, 'PROC', logging.DEBUG)
                 new_proc = subprocess.Popen(command, env=new_proc_env, close_fds=True)
                 self.process_record.set_pid(new_proc.pid)
                
@@ -567,4 +571,3 @@ class ProcExecutor(BaseExecutor):
                 return PROC_ERROR
         
         return True
-    
