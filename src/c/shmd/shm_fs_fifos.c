@@ -26,10 +26,19 @@
 
 #define NO_FIFO (-1)
 
+static int fifo_dir_id = 0;
 static int writer_fifos[SHMFS_NINODES];
 static int fifo_counter = 0;
 static pthread_mutex_t counter_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fifos_lock = PTHREAD_MUTEX_INITIALIZER;
+
+void shmfs_fifos_init(int id)
+{
+	char buf[64];
+	snprintf(buf, sizeof(buf), "/tmp/shmfs-fifos-%d/", id);
+	mkdir(buf, 00755);
+	fifo_dir_id = id;
+}
 
 static int new_fifo_number()
 {
@@ -113,7 +122,7 @@ void *shmfs_fifo_output(void *args)
 
 static void form_fifo_name(char *dst, int fifo_id)
 {
-	snprintf(dst, PATH_MAX, "/tmp/shmfs-fifos/%d", fifo_id);
+	snprintf(dst, PATH_MAX, "/tmp/shmfs-fifos-%d/%d", fifo_dir_id, fifo_id);
 }
 
 int shmfs_get_read_filename(const char *name, char *shmname)

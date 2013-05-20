@@ -24,6 +24,8 @@ struct shmfs_fifo_w
 	int inode_id;
 };
 
+void shmfs_fifos_init(int id);
+
 void *shmfs_fifo_input(void *args);
 void *shmfs_fifo_output(void *args);
 

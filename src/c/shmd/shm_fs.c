@@ -49,7 +49,7 @@ void shmfs_init(int id)
 {
 	shmfs_control_init(id);
 	fs = shmfs_data_init(id);
-	mkdir("/tmp/shmfs-fifos/", 00755);
+	shmfs_fifos_init(id);
 
 	if(id == 0) {
 		#ifndef SHMFS_STANDALONE
